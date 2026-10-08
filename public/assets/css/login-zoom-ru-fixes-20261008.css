@@ -1,0 +1,269 @@
+/* DEMI DEVILLE: login content in document flow, not a centered/cropped
+   1098px fixed canvas. This file is loaded after the legacy rules. */
+html body.login-page {
+  position: relative !important;
+  inset: auto !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  height: auto !important;
+  min-height: 100dvh !important;
+  margin: 0 !important;
+  overflow-x: clip !important;
+  overflow-y: auto !important;
+  background: #fff !important;
+}
+html body.login-page #loginCanvas.login-canvas {
+  position: relative !important;
+  inset: auto !important;
+  left: auto !important;
+  top: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  display: block !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  height: auto !important;
+  min-height: 100dvh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  transform: none !important;
+  background: transparent !important;
+}
+html body.login-page #loginCanvas .login-wrap {
+  position: relative !important;
+  inset: auto !important;
+  left: auto !important;
+  top: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+  align-items: center !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  max-width: 1100px !important;
+  height: auto !important;
+  min-height: calc(100dvh - 86px) !important;
+  padding: 30px 20px 72px !important;
+  margin: 0 auto !important;
+  overflow: visible !important;
+  transform: none !important;
+}
+html body.login-page #loginCanvas .login-art:not([hidden]) {
+  position: absolute !important;
+  inset: auto !important;
+  top: 16px !important;
+  left: 50% !important;
+  right: auto !important;
+  display: block !important;
+  box-sizing: border-box !important;
+  width: min(680px, 92%) !important;
+  max-width: 100% !important;
+  height: calc(100% - 32px) !important;
+  max-height: none !important;
+  object-fit: contain !important;
+  object-position: center top !important;
+  transform: translateX(-50%) !important;
+  opacity: .75 !important;
+  pointer-events: none !important;
+  z-index: 0 !important;
+}
+html body.login-page #loginCanvas .auth-stack {
+  position: relative !important;
+  inset: auto !important;
+  left: auto !important;
+  top: auto !important;
+  display: block !important;
+  box-sizing: border-box !important;
+  width: min(420px, 100%) !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  height: auto !important;
+  margin: 0 auto !important;
+  padding: 0 !important;
+  z-index: 2 !important;
+  transform: none !important;
+  overflow: visible !important;
+  text-align: center !important;
+}
+html body.login-page #loginCanvas .auth-stack .auth-form {
+  box-sizing: border-box !important;
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+  margin: 0 0 24px !important;
+}
+html body.login-page #loginCanvas .auth-stack .auth-title {
+  position: relative !important;
+  font-size: clamp(20px, 2.1vw, 28px) !important;
+  line-height: 1.25 !important;
+  margin: 6px 0 12px !important;
+}
+html body.login-page #loginCanvas .auth-stack input[type=text],
+html body.login-page #loginCanvas .auth-stack input[type=email],
+html body.login-page #loginCanvas .auth-stack input[type=password] {
+  box-sizing: border-box !important;
+  display: block !important;
+  width: 100% !important;
+  height: 42px !important;
+  min-height: 42px !important;
+  margin: 0 0 7px !important;
+  padding: 0 12px !important;
+  border: 1px solid #111 !important;
+  background: rgba(255,255,255,.85) !important;
+  font-size: 16px !important;
+  line-height: normal !important;
+  transform: none !important;
+}
+html body.login-page #loginCanvas .auth-stack .check-row {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  width: 100% !important;
+  height: auto !important;
+  margin: 7px 0 14px !important;
+  padding: 0 !important;
+  font-size: clamp(12px,1.1vw,16px) !important;
+  line-height: 1.35 !important;
+  overflow: visible !important;
+  transform: none !important;
+}
+html body.login-page #loginCanvas .auth-stack .check-row input {flex:0 0 auto!important;}
+html body.login-page #loginCanvas .auth-stack .btn-black {
+  box-sizing: border-box !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  width: 100% !important;
+  min-height: 42px !important;
+  height: 42px !important;
+  margin: 0 !important;
+  padding: 0 8px !important;
+  font-size: clamp(16px,1.5vw,21px) !important;
+  line-height: 1.2 !important;
+  transform: none !important;
+}
+html body.login-page #loginCanvas .user-panel {
+  position: relative !important;
+  inset: auto !important;
+  box-sizing: border-box !important;
+  width: min(520px, 100%) !important;
+  max-width: 100% !important;
+  margin: 24px auto !important;
+  padding: 24px !important;
+  transform: none !important;
+}
+/* Never crop a custom login background on resize (letterbox instead). */
+html body.login-page.dd-custom-page-bg #ddPageBackground {
+  width: 100vw !important;
+  height: 100dvh !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+  background: #fff !important;
+}
+@media (min-width: 901px) {
+  html body.login-page #loginCanvas #desktopHeader.site-header {
+    position: relative !important;
+    inset: auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100vw !important;
+    height: 86px !important;
+    margin: 0 !important;
+    transform: none !important;
+    overflow: visible !important;
+  }
+}
+@media (max-width: 900px) {
+  html body.login-page #loginCanvas #desktopHeader {display: none !important;}
+  html body.login-page #loginCanvas #mobileHeader {position: relative !important;top:auto!important;z-index:100!important;}
+  html body.login-page #loginCanvas .login-wrap {
+    width: 100% !important;
+    min-height: calc(100dvh - 84px) !important;
+    padding: 26px 18px 70px !important;
+  }
+  html body.login-page #loginCanvas .login-art:not([hidden]) {
+    width: min(520px, 100%) !important;
+    height: calc(100% - 24px) !important;
+    top: 12px !important;
+    opacity: .46 !important;
+  }
+  html body.login-page #loginCanvas .auth-stack {
+    width: min(360px, 100%) !important;
+  }
+  html body.login-page #loginCanvas .auth-stack .auth-title {
+    font-size: 23px !important;
+  }
+  html body.login-page #loginCanvas .auth-stack .check-row {
+    font-size: 13px !important;
+  }
+}
+/* Product photo modal: older stylesheet hides this even while JS opens it.
+   Keep it out of document flow while closed and above all site chrome when open. */
+html body.product-detail-page .dd-product-zoom {
+  display: none !important;
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  background: rgba(0,0,0,.91) !important;
+  color: #fff !important;
+  z-index: 200000 !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+  touch-action: none !important;
+}
+html body.product-detail-page .dd-product-zoom.open {
+  display: flex !important;
+}
+html body.product-detail-page.dd-zoom-open {
+  overflow: hidden !important;
+}
+html body.product-detail-page .dd-product-zoom-image {
+  position: relative !important;
+  display: block !important;
+  max-width: 94vw !important;
+  max-height: 83dvh !important;
+  width: auto !important;
+  height: auto !important;
+  object-fit: contain !important;
+  cursor: grab !important;
+  touch-action: none !important;
+  user-select: none !important;
+  transform-origin: center center !important;
+  will-change: transform !important;
+}
+html body.product-detail-page .dd-product-zoom-image:active {cursor: grabbing !important;}
+html body.product-detail-page .dd-product-zoom-tools {
+  position: absolute !important;
+  top: max(15px, env(safe-area-inset-top)) !important;
+  right: max(16px, env(safe-area-inset-right)) !important;
+  display: flex !important;
+  gap: 8px !important;
+  z-index: 2 !important;
+}
+html body.product-detail-page .dd-product-zoom-tools button {
+  width: 44px !important;
+  height: 44px !important;
+  min-width: 44px !important;
+  border: 1px solid #777 !important;
+  background: #181818 !important;
+  color: #fff !important;
+  border-radius: 3px !important;
+  font: 600 20px/1 Arial,sans-serif !important;
+  cursor: pointer !important;
+}
+html body.product-detail-page .dd-product-zoom-tools button.dd-product-zoom-reset {
+  font-size: 13px !important;
+}
+html body.product-detail-page #productImage:not(video) {cursor: zoom-in !important;}
+/* Previous gallery stylesheet turned off image pointer events, preventing the
+   real user click needed to open the lightbox. Re-enable on images only. */
+html body.product-detail-page #productPage .product-visual > img#productImage {
+  pointer-events: auto !important;
+}

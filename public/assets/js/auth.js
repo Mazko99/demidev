@@ -42,30 +42,6 @@
 
   /* Header and support are provided by renderChrome() in common.js. */
 
-  const canvas=$('#loginCanvas');
-  const fitLoginCanvas=()=>{
-    if(!canvas)return;
-    // The original page stretched 1098x616 separately on X and Y.
-    // Preserve the form and background proportions at every desktop size.
-    if(window.innerWidth<=900){
-      canvas.style.removeProperty('--login-uniform-scale');
-      canvas.style.removeProperty('--login-scale-x');
-      canvas.style.removeProperty('--login-scale-y');
-      return;
-    }
-    const referenceW=1098, referenceH=616;
-    const availableH=Math.max(520,window.innerHeight)-90;
-    const scale=Math.max(.58,Math.min(1,window.innerWidth/referenceW,availableH/referenceH));
-    canvas.style.setProperty('--login-uniform-scale',String(scale));
-    canvas.style.removeProperty('--login-scale-x');
-    canvas.style.removeProperty('--login-scale-y');
-  };
-  fitLoginCanvas();
-  window.addEventListener('resize',fitLoginCanvas,{passive:true});
-  window.visualViewport?.addEventListener('resize',fitLoginCanvas,{passive:true});
-
-
-
   /* Header and support are provided by renderChrome() in common.js. */
 
   const msg=$('#authMessage');
@@ -143,40 +119,3 @@
   }
 })();
 
-/* LOGIN proportional fit correction — additive only.
-   The old canvas-fit code above is intentionally preserved. This final pass
-   scales only the artwork/forms uniformly while header and SUPPORT stay at
-   the SHOP/reference size. */
-(()=>{
-  const wrap=document.querySelector('.login-page .login-wrap');
-  const canvas=document.querySelector('.login-page .login-canvas');
-  if(!wrap||!canvas)return;
-  const fitLoginContentUniformly=()=>{
-    if(window.innerWidth<=900){
-      wrap.style.removeProperty('--login-content-scale');
-      return;
-    }
-    const scale=Math.min(window.innerWidth/1098,window.innerHeight/616);
-    wrap.style.setProperty('--login-content-scale',String(scale));
-  };
-  fitLoginContentUniformly();
-  window.addEventListener('resize',fitLoginContentUniformly,{passive:true});
-})();
-
-/* LOGIN exact reference scale — additive final correction.
-   Preserve the 1098×616 design and scale it uniformly from viewport width.
-   Height is intentionally NOT used for fitting; a shorter viewport crops the
-   lower part instead of shrinking the entire design or creating a bottom gap. */
-(()=>{
-  const canvas=document.querySelector('.login-page .login-canvas');
-  if(!canvas)return;
-  const fitLoginReferenceFromWidth=()=>{
-    if(window.innerWidth<=900){
-      canvas.style.removeProperty('--login-screen-scale');
-      return;
-    }
-    canvas.style.setProperty('--login-screen-scale',String(window.innerWidth/1098));
-  };
-  fitLoginReferenceFromWidth();
-  window.addEventListener('resize',fitLoginReferenceFromWidth,{passive:true});
-})();

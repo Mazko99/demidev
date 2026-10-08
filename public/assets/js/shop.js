@@ -109,7 +109,7 @@
       const primary=(window.ddProductImages?.(p)||[])[0]||p.image||'';
       /* For one or two products use the real source image so the card can scale up
          without inheriting transparent padding from the old reference artwork. */
-      const useReference=lang!=='ru'&&ref&&primary===ref.image&&pageItems.length>2&&String(p.priceMode||'number')==='number'&&!window.ddIsVideo?.(primary);
+      const useReference=!!(ref&&primary===ref.image&&pageItems.length>2&&String(p.priceMode||'number')==='number'&&!window.ddIsVideo?.(primary));
       const art=useReference?ref.art:primary;
       const copy=productCopy(p);
       const referenceCopy=(useReference&&ref.label)?`<span class="product-reference-copy" aria-hidden="true">

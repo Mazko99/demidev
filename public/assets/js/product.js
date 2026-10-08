@@ -54,7 +54,7 @@
   }
 
   // Click-to-zoom for product photos. It is added as an overlay, so the original product layout is untouched.
-  const zoomLayer=document.createElement('div');zoomLayer.className='dd-product-zoom';zoomLayer.setAttribute('aria-hidden','true');zoomLayer.innerHTML=`<button class="dd-product-zoom-close" type="button" aria-label="${lang==='ru'?'Закрыть':'Close'}">×</button><img class="dd-product-zoom-image" alt="${esc(text('name'))}">`;
+  const zoomLayer=document.createElement('div');zoomLayer.className='dd-product-zoom';zoomLayer.setAttribute('aria-hidden','true');zoomLayer.innerHTML=`<div class="dd-product-zoom-tools" role="toolbar" aria-label="${lang==='ru'?'Увеличение фотографии':'Photo zoom'}"><button class="dd-product-zoom-out" type="button" aria-label="${lang==='ru'?'Уменьшить':'Zoom out'}">−</button><button class="dd-product-zoom-reset" type="button" aria-label="${lang==='ru'?'Исходный размер':'Reset zoom'}">1:1</button><button class="dd-product-zoom-in" type="button" aria-label="${lang==='ru'?'Увеличить':'Zoom in'}">+</button><button class="dd-product-zoom-close" type="button" aria-label="${lang==='ru'?'Закрыть':'Close'}">×</button></div><img class="dd-product-zoom-image" alt="${esc(text('name'))}">`;
   document.body.appendChild(zoomLayer);
   const zoomImg=$('.dd-product-zoom-image',zoomLayer),zoomClose=$('.dd-product-zoom-close',zoomLayer);let zoomScale=1,zoomX=0,zoomY=0,lastPointer=null,touches=new Map(),lastDistance=0;
   const applyZoom=()=>{zoomImg.style.transform=`translate3d(${zoomX}px,${zoomY}px,0) scale(${zoomScale})`};
@@ -62,7 +62,11 @@
   const openZoom=()=>{if(!mainMedia||mainMedia.tagName!=='IMG'||!mainMedia.src)return;zoomImg.src=mainMedia.src;resetZoom();zoomLayer.classList.add('open');zoomLayer.setAttribute('aria-hidden','false');document.body.classList.add('dd-zoom-open')};
   const closeZoom=()=>{zoomLayer.classList.remove('open');zoomLayer.setAttribute('aria-hidden','true');document.body.classList.remove('dd-zoom-open');resetZoom()};
   visualMedia.addEventListener('click',e=>{if(e.target===mainMedia&&mainMedia.tagName==='IMG')openZoom()});
-  zoomClose.addEventListener('click',closeZoom);zoomLayer.addEventListener('click',e=>{if(e.target===zoomLayer)closeZoom()});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&zoomLayer.classList.contains('open'))closeZoom()});
+  const zoomTo=next=>{zoomScale=Math.max(1,Math.min(5,next));if(zoomScale===1){zoomX=0;zoomY=0}applyZoom()};
+  $('.dd-product-zoom-in',zoomLayer).addEventListener('click',()=>zoomTo(zoomScale*1.35));
+  $('.dd-product-zoom-out',zoomLayer).addEventListener('click',()=>zoomTo(zoomScale/1.35));
+  $('.dd-product-zoom-reset',zoomLayer).addEventListener('click',resetZoom);
+  zoomClose.addEventListener('click',closeZoom);zoomLayer.addEventListener('click',e=>{if(e.target===zoomLayer)closeZoom()});document.addEventListener('keydown',e=>{if(!zoomLayer.classList.contains('open'))return;if(e.key==='Escape')closeZoom();if(e.key==='+'||e.key==='=')zoomTo(zoomScale*1.35);if(e.key==='-')zoomTo(zoomScale/1.35);});
   zoomLayer.addEventListener('wheel',e=>{if(!zoomLayer.classList.contains('open'))return;e.preventDefault();zoomScale=Math.max(1,Math.min(5,zoomScale*(e.deltaY<0?1.14:.88)));if(zoomScale===1){zoomX=0;zoomY=0}applyZoom()},{passive:false});
   zoomImg.addEventListener('dblclick',()=>{zoomScale=zoomScale>1?1:2.5;if(zoomScale===1){zoomX=0;zoomY=0}applyZoom()});
   zoomImg.addEventListener('pointerdown',e=>{zoomImg.setPointerCapture?.(e.pointerId);touches.set(e.pointerId,{x:e.clientX,y:e.clientY});lastPointer={x:e.clientX,y:e.clientY}});
