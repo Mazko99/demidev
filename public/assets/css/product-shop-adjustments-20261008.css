@@ -1,0 +1,84 @@
+/* 2026-10-08 — Only the two requested changes. No changes to images, layout
+   geometry, home page, header, other pages or existing basket handlers. */
+
+/* SHOP: the old artwork labels/prices and the CMS captions were both shown.
+   Retain the normal live title/price BELOW each product, hide ONLY the duplicate
+   decorative label/detail layer on built-in reference-product cards. */
+html body.shop-page .product-card.has-reference-copy > .product-reference-copy {
+  display: none !important;
+}
+html body.shop-page .product-card.has-reference-copy > .product-live-copy {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* The legacy Inside Jeans artwork itself contains a tiny "55$" above the
+   trousers. Mask only its empty upper margin; do not crop the garment or alter
+   the original image used on the product-detail page. */
+html body.shop-page .product-card.has-reference-copy[href*="id=inside-jeans"] .product-art {
+  clip-path: inset(9% 0 0 0) !important;
+}
+
+/* PRODUCT: compact desktop controls, restoring normal centered labels and
+   showing all four accordion rows without changing the photo/title/layout. */
+@media (min-width: 901px) {
+  html body.product-detail-page #productPage .product-info .size-picker:not([hidden]) {
+    min-height: 44px !important;
+    margin-bottom: 7px !important;
+  }
+  html body.product-detail-page #productPage .product-info #sizeToggle:not([hidden]) {
+    box-sizing: border-box !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    padding: 0 12px !important;
+    font-size: 15px !important;
+    line-height: 1.25 !important;
+    text-align: center !important;
+    white-space: normal !important;
+  }
+  html body.product-detail-page #productPage .product-info .btn-black:not([hidden]) {
+    box-sizing: border-box !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    margin-top: 7px !important;
+    padding: 0 12px !important;
+    font-size: 15px !important;
+    line-height: 1.25 !important;
+    text-align: center !important;
+    white-space: normal !important;
+  }
+  html body.product-detail-page #productPage .product-info #buyNow:not([hidden]) {
+    margin-top: 4px !important;
+  }
+  html body.product-detail-page #productPage .product-info .accordion {
+    margin-top: 15px !important;
+  }
+  html body.product-detail-page #productPage .product-info .acc-trigger {
+    box-sizing: border-box !important;
+    display: flex !important;
+    align-items: center !important;
+    width: 100% !important;
+    min-height: 46px !important;
+    height: auto !important;
+    padding: 10px 0 !important;
+    font-size: 15px !important;
+    line-height: 1.3 !important;
+    text-align: left !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+  }
+  /* Older Benzin fallback horizontally stretched these words unevenly. */
+  html body.product-detail-page #productPage .product-info .acc-trigger .product-medium-shape {
+    transform: none !important;
+    display: inline !important;
+    font-weight: 600 !important;
+    letter-spacing: 0 !important;
+  }
+}
