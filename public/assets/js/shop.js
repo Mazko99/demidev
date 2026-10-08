@@ -1,0 +1,239 @@
+(async()=>{
+  document.documentElement.classList.add('shop-scroll-page');
+  await renderChrome();
+  const site=await SITE;
+  const grid=$('#productGrid');
+  const pagination=$('#shopPagination');
+  const curr=site.settings?.currency||'$';
+  const PAGE_SIZE=Math.max(1,Math.min(8,Math.floor(Number(site.settings?.shopPageSize)||8)));
+  const lang=document.documentElement.lang==='ru'?'ru':'en';
+  const legalFontSize=Math.max(6,Math.min(30,Number(site.settings?.shopLegalMobileFontSize)||10));
+  const legalBottom=Math.max(0,Math.min(80,Number(site.settings?.shopLegalMobileBottom)??2));
+  const legalOffsetX=Math.max(-120,Math.min(120,Number(site.settings?.shopLegalMobileOffsetX)||0));
+  document.body.style.setProperty('--shop-legal-mobile-font-size',`${legalFontSize}px`);
+  document.body.style.setProperty('--shop-legal-mobile-bottom',`${Number.isFinite(legalBottom)?legalBottom:2}px`);
+  document.body.style.setProperty('--shop-legal-mobile-offset-x',`${legalOffsetX}px`);
+
+  /* On the SHOP page the DEMI DEVILLE title returns to the home page. */
+  $$('#desktopHeader .brand, #mobileHeader .brand').forEach(brand=>{
+    brand.setAttribute('href','/');
+    brand.addEventListener('click',e=>{e.preventDefault();location.href='/';});
+  });
+
+  const reference={
+    'invitation-tshirt':{image:'/assets/images/product-tshirt.jpg',art:'/assets/images/product-tshirt-ref.png',label:'/assets/images/shop-label-invitation.png',detail:'/assets/images/shop-price-invitation.png'},
+    'human-uniform':{image:'/assets/images/product-longsleeve.jpg',art:'/assets/images/product-longsleeve-ref.png',label:'/assets/images/shop-label-human.png',detail:'/assets/images/shop-detail-human.png'},
+    'lobby-hoody':{image:'/assets/images/product-hoodie.jpg',art:'/assets/images/product-hoodie-ref.png',label:'/assets/images/shop-label-lobby.png',detail:'/assets/images/shop-detail-lobby.png'},
+    'inside-jeans':{image:'/assets/images/product-jeans.jpg',art:'/assets/images/product-jeans-ref.png',label:'/assets/images/shop-label-jeans.png',detail:'/assets/images/shop-detail-jeans.png'}
+  };
+  const legacyCategories={
+    'invitation-tshirt':['tops'],
+    'human-uniform':['tops'],
+    'lobby-hoody':['jackets-coats'],
+    'inside-jeans':['jeans-pants-shorts']
+  };
+  const defaultCategories=[
+    {slug:'jackets-coats',enabled:true},{slug:'jeans-pants-shorts',enabled:true},{slug:'tops',enabled:true},{slug:'bags-accessories',enabled:true}
+  ];
+  const categories=(Array.isArray(site.settings?.shopCategories)&&site.settings.shopCategories.length?site.settings.shopCategories:defaultCategories).filter(c=>c&&c.enabled!==false);
+  const params=new URLSearchParams(location.search);
+  const requestedCategory=String(params.get('category')||'').trim();
+  const activeCategory=categories.some(c=>String(c.slug||c.id)===requestedCategory)?requestedCategory:'';
+  const categoriesOf=p=>Array.isArray(p.categories)&&p.categories.length?p.categories.map(String):(legacyCategories[String(p.id)]||[]);
+  const allProducts=(site.products||[]).filter(p=>p.active!==false);
+  const products=activeCategory?allProducts.filter(p=>categoriesOf(p).includes(activeCategory)):allProducts;
+  const pageCount=Math.max(1,Math.ceil(products.length/PAGE_SIZE));
+  const fromUrl=Math.max(1,Number(params.get('page'))||1);
+  let currentPage=Math.min(fromUrl,pageCount);
+
+  function localized(p,field){
+    if(window.ddProductText)return window.ddProductText(p,field);
+    if(lang==='ru'&&String(p?.[`${field}Ru`]||'').trim())return String(p[`${field}Ru`]);
+    return String(p?.[field]||'');
+  }
+  function productCopy(p){
+    let name=localized(p,'name');
+    const priceMode=String(p?.priceMode||'number');
+    let detail='';
+    if(priceMode==='text'){
+      detail=String(lang==='ru'?(p?.priceTextRu||p?.priceText||''):(p?.priceText||p?.priceTextRu||''));
+    }else if(priceMode!=='hidden'){
+      detail=money(p.price,curr);
+    }
+    /* Keep the historical English formatting only for the original EN artwork/numeric prices. */
+    if(lang!=='ru'&&priceMode==='number'){
+      if(/Black&White$/i.test(name)){
+        name=name.replace(/\s*Black&White$/i,'');
+        detail=`Black&White - ${detail}`;
+      }else if(/\sBlack Black$/i.test(name)){
+        name=name.replace(/\s*Black Black$/i,'');
+        detail=`Black - ${detail}`;
+      }else if(/\sBlack$/i.test(name)){
+        name=name.replace(/\s*Black$/i,'');
+        detail=`Black - ${detail}`;
+      }
+    }
+    return {name,detail};
+  }
+
+  function renderProducts(){
+    const start=(currentPage-1)*PAGE_SIZE;
+    const pageItems=products.slice(start,start+PAGE_SIZE);
+    grid.classList.toggle('many-products',pageItems.length>4);
+    grid.dataset.count=String(pageItems.length);
+
+    /* Adapt card density to the amount of products shown on this page.
+       The footer stays pinned to the bottom; low-count pages use larger
+       product artwork instead of leaving a large unused field. */
+    const count=Math.max(1,pageItems.length);
+    /* Desktop SHOP is always a stable 4 x 2 storefront. The first row fills
+       left-to-right with four products before the second row starts. */
+    const desktopColumns=Math.max(1,Math.min(4,count));
+    const desktopRows=Math.max(1,Math.ceil(count/desktopColumns));
+    const desktopMedia=305;
+    const desktopGap=95;
+    const desktopCardWidth=355;
+    grid.style.setProperty('--shop-columns',String(desktopColumns));
+    grid.style.setProperty('--shop-rows',String(desktopRows));
+    grid.style.setProperty('--shop-media-size',`${desktopMedia}px`);
+    grid.style.setProperty('--shop-card-width',`${desktopCardWidth}px`);
+    grid.style.setProperty('--shop-column-gap',`${desktopGap}px`);
+
+    if(!pageItems.length){
+      grid.innerHTML=`<p class="shop-empty">${lang==='ru'?'В этом разделе пока нет товаров.':'No products in this category yet.'}</p>`;
+      return;
+    }
+
+    grid.innerHTML=pageItems.map((p,i)=>{
+      const ref=reference[p.id];
+      const primary=(window.ddProductImages?.(p)||[])[0]||p.image||'';
+      /* For one or two products use the real source image so the card can scale up
+         without inheriting transparent padding from the old reference artwork. */
+      const useReference=lang!=='ru'&&ref&&primary===ref.image&&pageItems.length>2&&String(p.priceMode||'number')==='number'&&!window.ddIsVideo?.(primary);
+      const art=useReference?ref.art:primary;
+      const copy=productCopy(p);
+      const referenceCopy=(useReference&&ref.label)?`<span class="product-reference-copy" aria-hidden="true">
+          <img class="product-reference-label" src="${esc(ref.label)}" alt="" loading="lazy" decoding="async">
+          ${ref.detail?`<img class="product-reference-detail" src="${esc(ref.detail)}" alt="" loading="lazy" decoding="async">`:''}
+        </span>`:'';
+      const mediaHtml=window.ddIsVideo?.(art)
+        ? `<video class="product-art" src="${esc(art)}" autoplay muted loop playsinline preload="metadata"></video>`
+        : `<img class="product-art" src="${esc(art)}" alt="${esc(copy.name)}" loading="eager" fetchpriority="${i<4?'high':'auto'}" decoding="async">`;
+      return `<a class="product-card product-card-${i+1}${referenceCopy?' has-reference-copy':''}" href="/product.html?id=${encodeURIComponent(p.id)}">
+        <span class="media">${mediaHtml}</span>
+        ${referenceCopy}
+        <span class="product-live-copy">
+          <span class="product-name">${esc(copy.name)}</span>
+          ${copy.detail?`<span class="product-price">${esc(copy.detail)}</span>`:''}
+        </span>
+      </a>`;
+    }).join('');
+  }
+
+  function pageUrl(page){
+    const next=new URLSearchParams();
+    if(activeCategory)next.set('category',activeCategory);
+    if(page>1)next.set('page',String(page));
+    const q=next.toString();return `${location.pathname}${q?`?${q}`:''}`;
+  }
+  function renderPagination(){
+    const footer=pagination?.closest('.shop-footer');
+    pagination?.classList.remove('is-hidden');
+    footer?.classList.toggle('is-single-page',pageCount<=1);
+    pagination.innerHTML=Array.from({length:pageCount},(_,i)=>{
+      const page=i+1;
+      return `<button class="shop-page-number${page===currentPage?' is-active':''}" type="button" data-shop-page="${page}" aria-label="Page ${page}" aria-current="${page===currentPage?'page':'false'}">${page}</button>`;
+    }).join('');
+
+    $$('[data-shop-page]',pagination).forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        const next=Number(btn.dataset.shopPage)||1;
+        if(next===currentPage)return;
+        currentPage=next;
+        history.replaceState(null,'',pageUrl(currentPage));
+        renderProducts();renderPagination();
+        window.scrollTo({top:0,behavior:'smooth'});
+      });
+    });
+  }
+  renderProducts();renderPagination();
+
+  const canvas=$('#shopCanvas');const stage=$('#shopStage');
+  function fitCanvas(){
+    if(!canvas||!stage)return;
+    const footer=pagination?.closest('.shop-footer');
+    if(innerWidth<=900){
+      canvas.style.removeProperty('--shop-scale');
+      canvas.style.removeProperty('--shop-scale-x');
+      canvas.style.removeProperty('--shop-scale-y');
+      canvas.style.removeProperty('--shop-inverse-scale');
+      canvas.style.removeProperty('height');
+      stage.style.removeProperty('--shop-stage-height');
+      stage.style.removeProperty('height');
+      document.body.style.removeProperty('min-height');
+      footer?.style.removeProperty('top');
+      footer?.style.removeProperty('bottom');
+      return;
+    }
+    /* Preserve the 1920px storefront proportions when the browser window is resized.
+       The old implementation scaled X from viewport width and Y from viewport height,
+       which visibly squashed product photos whenever the window became shorter.
+       Use one width-driven scale on both axes; a short viewport now scrolls instead. */
+    const scale=Math.max(0.01,innerWidth/1920);
+    const scaleX=scale;
+    const scaleY=scale;
+    canvas.style.setProperty('--shop-scale',String(scale));canvas.style.setProperty('--shop-scale-x',String(scaleX));canvas.style.setProperty('--shop-scale-y',String(scaleY));canvas.style.setProperty('--shop-inverse-scale',String(1/scale));
+
+    /* Measure the actual rendered bottom of every card, not only the grid box.
+       Portrait media can extend the second row past the old 1080px canvas. */
+    const canvasRect=canvas.getBoundingClientRect();
+    let productsBottom=0;
+    $$('.product-card',grid).forEach(card=>{
+      const rect=card.getBoundingClientRect();
+      if(rect.width||rect.height){
+        productsBottom=Math.max(productsBottom,(rect.bottom-canvasRect.top)/Math.max(scale,.0001));
+      }
+    });
+    if(!productsBottom){
+      const gridRect=grid?.getBoundingClientRect();
+      if(gridRect)productsBottom=(gridRect.bottom-canvasRect.top)/Math.max(scale,.0001);
+    }
+
+    const footerHeight=footer?.offsetHeight||70;
+    const defaultFooterTop=1080-footerHeight-10;
+    const viewportDesignHeight=Math.ceil(innerHeight/Math.max(scale,.0001));
+    const footerTop=Math.max(defaultFooterTop,Math.ceil(productsBottom+42),viewportDesignHeight-footerHeight-32);
+    const designHeight=Math.max(1080,viewportDesignHeight,Math.ceil(footerTop+footerHeight+34));
+    const stageHeight=Math.ceil(designHeight*scale);
+
+    if(footer){footer.style.top=`${footerTop}px`;footer.style.bottom='auto'}
+    canvas.style.height=`${designHeight}px`;
+    stage.style.setProperty('--shop-stage-height',`${stageHeight}px`);
+    stage.style.setProperty('height',`${stageHeight}px`,'important');
+    document.body.style.setProperty('min-height',`${stageHeight}px`,'important');
+  }
+  let resizeFrame=0;
+  const scheduleFit=()=>{if(resizeFrame)return;resizeFrame=requestAnimationFrame(()=>{resizeFrame=0;fitCanvas()})};
+  fitCanvas();
+  addEventListener('resize',scheduleFit,{passive:true});
+  window.visualViewport?.addEventListener('resize',scheduleFit,{passive:true});
+  /* Recalculate only when actual product media becomes ready or products are
+     replaced (pagination/category changes). Do not observe the grid size itself:
+     canvas resizing must never trigger another canvas resize cycle. */
+  const bindMediaLayoutRefresh=()=>{
+    $$('img.product-art,video.product-art',grid).forEach(media=>{
+      if(media.dataset.shopLayoutBound==='1')return;
+      media.dataset.shopLayoutBound='1';
+      const eventName=media.tagName==='VIDEO'?'loadedmetadata':'load';
+      const isReady=media.tagName==='VIDEO'?media.readyState>=1:media.complete;
+      if(isReady){scheduleFit();return;}
+      media.addEventListener(eventName,scheduleFit,{once:true,passive:true});
+      media.addEventListener('error',scheduleFit,{once:true,passive:true});
+    });
+  };
+  bindMediaLayoutRefresh();
+  if(grid&&'MutationObserver' in window){
+    const shopProductObserver=new MutationObserver(()=>{bindMediaLayoutRefresh();scheduleFit();});
+    shopProductObserver.observe(grid,{childList:true,subtree:true});
+  }
+})();

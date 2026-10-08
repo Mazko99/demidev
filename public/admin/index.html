@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>DEMI DEVILLE — Админ-панель</title>
+  <link rel="stylesheet" href="/assets/css/admin.css?v=20260918-v22">
+</head>
+<body>
+  <section id="loginView" class="auth-screen">
+    <form id="adminLogin" class="auth-card" autocomplete="off">
+      <div class="auth-brand">DEMI DEVILLE</div>
+      <h1>Админ-панель</h1>
+      <p class="muted">Войдите под учётной записью администратора.</p>
+      <div id="loginNotice" class="notice" aria-live="polite"></div>
+      <label class="field">
+        <span>Электронная почта</span>
+        <input required type="email" name="email" autocomplete="off" placeholder="admin@example.com">
+      </label>
+      <label class="field">
+        <span>Пароль</span>
+        <input required type="password" name="password" autocomplete="new-password" placeholder="Пароль">
+      </label>
+      <button class="primary-btn wide" type="submit">Войти</button>
+    </form>
+  </section>
+
+  <div id="adminView" class="admin-app" hidden>
+    <aside class="side-panel">
+      <div class="side-brand">DEMI DEVILLE</div>
+      <div class="side-caption">АДМИН</div>
+      <nav class="side-nav">
+        <button class="nav-item active" type="button" data-admin-tab="home">Главная страница</button>
+        <button class="nav-item" type="button" data-admin-tab="backgrounds">ФОНЫ СТРАНИЦ</button>
+        <button class="nav-item" type="button" data-admin-tab="shop">SHOP</button>
+        <button class="nav-item" type="button" data-admin-tab="gallery">ГАЛЕРЕЯ</button>
+        <button class="nav-item" type="button" data-admin-tab="about">ABOUT</button>
+        <button class="nav-item" type="button" data-admin-tab="instagram">INSTAGRAM</button>
+        <button class="nav-item" type="button" data-admin-tab="contact">КОНТАКТЫ</button>
+        <button class="nav-item" type="button" data-admin-tab="support">ПОДДЕРЖКА</button>
+        <button class="nav-item" type="button" data-admin-tab="orders">ЗАКАЗЫ</button>
+        <button class="nav-item" type="button" data-admin-tab="clients">КЛИЕНТЫ</button>
+        <button class="nav-item" type="button" data-admin-tab="payment">ОПЛАТА</button>
+      </nav>
+      <div class="side-bottom">
+        <a class="side-link" href="/" target="_blank" rel="noreferrer">Открыть сайт ↗</a>
+        <button id="adminLogout" class="side-link side-button" type="button">Выйти</button>
+      </div>
+    </aside>
+
+    <main class="workspace">
+      <header class="workspace-head">
+        <div>
+          <div class="eyebrow">Редактор сайта</div>
+          <h1 id="workspaceTitle">Главная страница</h1>
+        </div>
+        <div class="head-actions">
+          <span id="adminUser" class="admin-user"></span>
+          <button id="saveTop" class="primary-btn" type="button">Сохранить</button>
+        </div>
+      </header>
+
+      <div id="globalNotice" class="notice global-notice" aria-live="polite"></div>
+
+      <form id="homeSettingsForm" class="editor-form">
+        <section class="device-card" data-device="desktop">
+          <div class="device-card-head">
+            <div>
+              <span class="device-badge">ПК</span>
+              <h2>Главная страница — компьютер</h2>
+            </div>
+            <span class="device-hint">Компьютер</span>
+          </div>
+
+          <div class="device-layout">
+            <div class="preview desktop-preview" id="desktopPreview">
+              <div class="preview-overlay" id="desktopPreviewOverlay"></div>
+              <div class="preview-ui">
+                <div class="preview-logo preview-logo-art" aria-label="DEMI DEVILLE"></div>
+                <div class="preview-menu"><span>SHOP</span><span>LOGIN</span></div>
+                <div class="preview-support">SUPPORT</div>
+              </div>
+            </div>
+
+            <div class="controls">
+              <div class="control-block">
+                <div class="control-title">Фон</div>
+                <label class="field">
+                  <span>Изображение для ПК</span>
+                  <input id="heroDesktop" name="heroDesktop" type="text" placeholder="/assets/images/hero.jpg">
+                </label>
+                <label class="upload-btn">
+                  <input id="heroDesktopFile" type="file" accept="image/*,video/mp4,video/webm,video/quicktime" data-upload-target="heroDesktop">
+                  <span>Загрузить новый фон</span>
+                </label>
+              </div>
+
+              <div class="control-block">
+                <div class="control-title">Затемнение фона</div>
+                <div class="range-row">
+                  <input id="desktopOverlayRange" type="range" min="0" max="100" step="1" value="35">
+                  <div class="number-wrap"><input id="homeDesktopOverlayOpacity" name="homeDesktopOverlayOpacity" type="number" min="0" max="100" step="1" value="35"><span>%</span></div>
+                </div>
+              </div>
+
+              <div class="control-block">
+                <div class="control-title">Шрифт элементов</div>
+                <label class="field">
+                  <span>Меню, кнопки и текстовые элементы главной страницы</span>
+                  <select id="homeDesktopFont" name="homeDesktopFont" class="font-select" data-default-label="Текущий дизайн"></select>
+                </label>
+                <div class="font-sample" id="desktopFontSample">SHOP · LOGIN · SUPPORT</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="device-card" data-device="mobile">
+          <div class="device-card-head">
+            <div>
+              <span class="device-badge">ТЕЛЕФОН</span>
+              <h2>Главная страница — телефон</h2>
+            </div>
+            <span class="device-hint">Телефон</span>
+          </div>
+
+          <div class="device-layout mobile-layout">
+            <div class="preview mobile-preview" id="mobilePreview">
+              <div class="preview-overlay" id="mobilePreviewOverlay"></div>
+              <div class="preview-ui mobile-ui">
+                <div class="mobile-top"><span>MENU</span><strong>DEMI DEVILLE</strong></div>
+                <div class="mobile-bottom"><span>EN / RU</span><span>SUPPORT</span></div>
+              </div>
+            </div>
+
+            <div class="controls">
+              <div class="control-block">
+                <div class="control-title">Фон</div>
+                <label class="field">
+                  <span>Изображение для телефона</span>
+                  <input id="heroMobile" name="heroMobile" type="text" placeholder="/assets/images/hero-mobile.jpg">
+                </label>
+                <label class="upload-btn">
+                  <input id="heroMobileFile" type="file" accept="image/*,video/mp4,video/webm,video/quicktime" data-upload-target="heroMobile">
+                  <span>Загрузить новый фон</span>
+                </label>
+              </div>
+
+              <div class="control-block">
+                <div class="control-title">Затемнение фона</div>
+                <div class="range-row">
+                  <input id="mobileOverlayRange" type="range" min="0" max="100" step="1" value="35">
+                  <div class="number-wrap"><input id="homeMobileOverlayOpacity" name="homeMobileOverlayOpacity" type="number" min="0" max="100" step="1" value="35"><span>%</span></div>
+                </div>
+              </div>
+
+              <div class="control-block">
+                <div class="control-title">Шрифт элементов</div>
+                <label class="field">
+                  <span>MENU, пункты меню, SUPPORT, выбор языка и другие текстовые элементы</span>
+                  <select id="homeMobileFont" name="homeMobileFont" class="font-select" data-default-label="Текущий дизайн"></select>
+                </label>
+                <div class="font-sample" id="mobileFontSample">MENU · SHOP ALL · SUPPORT</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="device-card menu-editor-card">
+          <div class="device-card-head">
+            <div>
+              <span class="device-badge">МЕНЮ</span>
+              <h2>Редактирование меню</h2>
+            </div>
+          </div>
+
+          <div class="menu-style-grid">
+            <div class="control-block">
+              <div class="control-title">Меню на ПК</div>
+              <label class="field">
+                <span>Шрифт</span>
+                <select id="menuDesktopFont" class="font-select" data-default-label="Текущий дизайн"></select>
+              </label>
+              <div class="inline-fields two-cols">
+                <label class="field"><span>Размер текста, px</span><input id="menuDesktopFontSize" type="number" min="8" max="80" step="1" placeholder="Текущий"></label>
+                <label class="field"><span>Жирность</span><select id="menuDesktopFontWeight" class="weight-select"></select></label>
+              </div>
+            </div>
+
+            <div class="control-block">
+              <div class="control-title">Меню на телефоне</div>
+              <label class="field">
+                <span>Шрифт</span>
+                <select id="menuMobileFont" class="font-select" data-default-label="Текущий дизайн"></select>
+              </label>
+              <div class="inline-fields two-cols">
+                <label class="field"><span>Размер текста, px</span><input id="menuMobileFontSize" type="number" min="8" max="80" step="1" placeholder="Текущий"></label>
+                <label class="field"><span>Жирность</span><select id="menuMobileFontWeight" class="weight-select"></select></label>
+              </div>
+            </div>
+
+            <div class="control-block underline-control">
+              <div class="control-title">Полоска при наведении</div>
+              <label class="field"><span>Цвет подчёркивания пунктов меню</span></label>
+              <div class="color-row">
+                <input id="menuUnderlineColor" type="color" value="#ffffff">
+                <input id="menuUnderlineColorText" type="text" value="#ffffff" maxlength="9">
+              </div>
+            </div>
+          </div>
+
+          <div class="menu-builder">
+            <div class="menu-builder-head">
+              <div>
+                <h3>Основные пункты и подпункты</h3>
+                <p>Можно изменить название и ссылку, добавить или удалить основной пункт и любой подпункт.</p>
+              </div>
+              <button id="addMenuGroup" class="secondary-btn" type="button">+ Добавить основной пункт</button>
+            </div>
+            <div id="menuGroupsEditor" class="menu-groups"></div>
+
+            <div class="menu-builder-head extra-head">
+              <div>
+                <h3>Дополнительные пункты мобильного меню</h3>
+                <p>Например: GALLERY и ABOUT.</p>
+              </div>
+              <button id="addMobileLink" class="secondary-btn" type="button">+ Добавить пункт</button>
+            </div>
+            <div id="mobileLinksEditor" class="mobile-links-editor"></div>
+          </div>
+        </section>
+
+        <div class="form-actions">
+          <div class="save-note">Изменения применятся после сохранения.</div>
+          <button class="primary-btn large" type="submit">Сохранить изменения</button>
+        </div>
+      </form>
+
+      <section id="backgroundsEditor" class="editor-form" hidden>
+        <section class="device-card">
+          <div class="device-card-head"><div><span class="device-badge">ФОНЫ</span><h2>Фоны страниц — фото или видео</h2></div></div>
+          <p class="admin-help-text">Можно задать отдельный фон страницы. Поддерживаются изображения, MP4, WebM и MOV. Если поле пустое — используется текущий дизайн страницы без изменений.</p>
+          <div id="pageBackgroundsEditor" class="page-backgrounds-editor"></div>
+        </section>
+        <div class="form-actions"><div class="save-note">Фон применяется только к выбранной странице и не меняет её масштаб/разметку.</div><button id="savePageBackgrounds" class="primary-btn large" type="button">Сохранить фоны</button></div>
+      </section>
+
+      <section id="shopEditor" class="editor-form shop-editor" hidden>
+        <section class="device-card shop-settings-card">
+          <div class="device-card-head">
+            <div>
+              <span class="device-badge">SHOP</span>
+              <h2>Настройки страницы SHOP</h2>
+            </div>
+            <a class="secondary-btn shop-open-link" href="/shop.html" target="_blank" rel="noreferrer">Открыть SHOP ↗</a>
+          </div>
+          <div class="shop-settings-grid">
+            <label class="field">
+              <span>Сколько товаров показывать на одной странице</span>
+              <input id="shopPageSize" type="number" min="1" max="8" step="1" value="8">
+            </label>
+            <label class="field">
+              <span>Размер Terms &amp; Conditions / Privacy Policy на телефоне, px</span>
+              <input id="shopLegalMobileFontSize" type="number" min="6" max="30" step="1" value="10">
+            </label>
+            <label class="field">
+              <span>Отступ юридических ссылок от нижнего края, px</span>
+              <input id="shopLegalMobileBottom" type="number" min="0" max="80" step="1" value="2">
+            </label>
+            <label class="field">
+              <span>Смещение юридических ссылок по горизонтали, px</span>
+              <input id="shopLegalMobileOffsetX" type="number" min="-120" max="120" step="1" value="0">
+            </label>
+          </div>
+        </section>
+
+        <section class="device-card categories-card">
+          <div class="device-card-head">
+            <div>
+              <span class="device-badge">КАТЕГОРИИ</span>
+              <h2>Разделы магазина</h2>
+            </div>
+            <button id="addShopCategory" class="secondary-btn" type="button">+ Добавить раздел</button>
+          </div>
+          <div id="shopCategoriesEditor" class="category-list"></div>
+        </section>
+
+        <section class="device-card products-admin-card">
+          <div class="device-card-head">
+            <div>
+              <span class="device-badge">ТОВАРЫ</span>
+              <h2>Товары</h2>
+            </div>
+            <button id="addProductAdmin" class="primary-btn" type="button">+ Добавить товар</button>
+          </div>
+          <div class="product-admin-toolbar">
+            <label class="field product-search-field"><span>Поиск товара</span><input id="productAdminSearch" type="search" placeholder="Название или ID"></label>
+            <label class="check-control product-active-filter"><input id="showHiddenProducts" type="checkbox"> Показывать только скрытые</label>
+          </div>
+          <div id="productsAdminList" class="products-admin-list"></div>
+        </section>
+
+        <div class="form-actions shop-actions">
+          <div class="save-note">Категории и настройки применятся после сохранения. Товары сохраняются из карточки редактирования.</div>
+          <button id="saveShopSettings" class="primary-btn large" type="button">Сохранить настройки магазина</button>
+        </div>
+      </section>
+
+      <section id="galleryEditor" class="editor-form gallery-editor-admin" hidden>
+        <section class="device-card gallery-admin-card">
+          <div class="device-card-head">
+            <div>
+              <span class="device-badge">ГАЛЕРЕЯ</span>
+              <h2>Редактирование галереи</h2>
+            </div>
+            <a class="secondary-btn shop-open-link" href="/gallery.html" target="_blank" rel="noreferrer">Открыть галерею ↗</a>
+          </div>
+          <div class="gallery-admin-toolbar">
+            <label class="upload-btn gallery-upload-btn">
+              <input id="galleryImagesUpload" type="file" accept="image/*,video/mp4,video/webm,video/quicktime" multiple>
+              <span>+ Добавить фото / видео</span>
+            </label>
+            <div class="gallery-admin-help">Для каждого изображения можно задать описание EN/RU, шрифт подписи, порядок, видимость и поворот.</div>
+          </div>
+          <div id="galleryAdminList" class="gallery-admin-list"></div>
+        </section>
+
+        <div class="form-actions gallery-actions">
+          <div class="save-note">Все изменения галереи применятся после сохранения.</div>
+          <button id="saveGallerySettings" class="primary-btn large" type="button">Сохранить галерею</button>
+        </div>
+      </section>
+
+      <section id="aboutEditor" class="editor-form" hidden>
+        <section class="device-card">
+          <div class="device-card-head"><div><span class="device-badge">ABOUT</span><h2>Редактор ABOUT</h2></div><a class="secondary-btn" href="/about.html" target="_blank" rel="noreferrer">Открыть ABOUT ↗</a></div>
+          <p class="admin-help-text">Основное изображение всегда остаётся первым блоком. Дополнительное фото/видео и текст выводятся только ниже него и никогда не накладываются на основное изображение.</p>
+          <div class="contact-admin-grid about-main-media-grid">
+            <label class="field span-2"><span>Основное изображение / видео — ПК</span><input id="aboutMainMediaDesktop" placeholder="/assets/images/about-copy-psd.png"></label>
+            <label class="upload-btn span-2"><input id="aboutMainMediaDesktopFile" type="file" accept="image/*,video/mp4,video/webm,video/quicktime"><span>Загрузить основное медиа для ПК</span></label>
+            <label class="field span-2"><span>Основное изображение / видео — телефон</span><input id="aboutMainMediaMobile" placeholder="/assets/images/about-mobile-approved.jpg"></label>
+            <label class="upload-btn span-2"><input id="aboutMainMediaMobileFile" type="file" accept="image/*,video/mp4,video/webm,video/quicktime"><span>Загрузить основное медиа для телефона</span></label>
+          </div>
+        </section>
+
+        <section class="device-card">
+          <div class="device-card-head"><div><span class="device-badge">ТЕКСТ</span><h2>Дополнительный контент ниже изображения</h2></div></div>
+          <div class="about-rich-admin-grid">
+            <section class="about-rich-language">
+              <h3>Текст EN</h3>
+              <div class="about-rich-toolbar" data-rich-target="aboutExtraHtmlEnEditor">
+                <select class="font-select" data-rich-font data-default-label="Шрифт"></select>
+                <select data-rich-size><option value="">Размер</option><option value="2">12–14</option><option value="3">16</option><option value="4">18–20</option><option value="5">24</option><option value="6">30</option><option value="7">36+</option></select>
+                <button type="button" data-rich-cmd="bold"><b>B</b></button><button type="button" data-rich-cmd="italic"><i>I</i></button><button type="button" data-rich-cmd="underline"><u>U</u></button>
+                <label class="rich-color-label">Текст <input type="color" data-rich-color="foreColor" value="#000000"></label>
+                <label class="rich-color-label">Фон <input type="color" data-rich-color="hiliteColor" value="#ffffff"></label>
+              </div>
+              <div id="aboutExtraHtmlEnEditor" class="about-rich-editor" contenteditable="true" spellcheck="true"></div>
+            </section>
+            <section class="about-rich-language">
+              <h3>Текст RU</h3>
+              <div class="about-rich-toolbar" data-rich-target="aboutExtraHtmlRuEditor">
+                <select class="font-select" data-rich-font data-default-label="Шрифт"></select>
+                <select data-rich-size><option value="">Размер</option><option value="2">12–14</option><option value="3">16</option><option value="4">18–20</option><option value="5">24</option><option value="6">30</option><option value="7">36+</option></select>
+                <button type="button" data-rich-cmd="bold"><b>B</b></button><button type="button" data-rich-cmd="italic"><i>I</i></button><button type="button" data-rich-cmd="underline"><u>U</u></button>
+                <label class="rich-color-label">Текст <input type="color" data-rich-color="foreColor" value="#000000"></label>
+                <label class="rich-color-label">Фон <input type="color" data-rich-color="hiliteColor" value="#ffffff"></label>
+              </div>
+              <div id="aboutExtraHtmlRuEditor" class="about-rich-editor" contenteditable="true" spellcheck="true"></div>
+            </section>
+          </div>
+          <div class="contact-admin-grid" style="margin-top:18px">
+            <label class="field"><span>Базовый шрифт блока</span><select id="aboutExtraFont" class="font-select" data-default-label="Текущий дизайн"></select></label>
+            <label class="field"><span>Размер текста на ПК, px</span><input id="aboutExtraFontSizeDesktop" type="number" min="10" max="80" step="1" value="24"></label>
+            <label class="field"><span>Размер текста на телефоне, px</span><input id="aboutExtraFontSizeMobile" type="number" min="10" max="48" step="1" value="18"></label>
+            <label class="field span-2"><span>Дополнительное фото / видео (ниже основной картинки)</span><input id="aboutExtraMedia" placeholder="/uploads/about-media.jpg"></label>
+            <label class="upload-btn span-2"><input id="aboutExtraMediaFile" type="file" accept="image/*,video/mp4,video/webm,video/quicktime"><span>Загрузить дополнительное фото / видео</span></label>
+          </div>
+        </section>
+        <div class="form-actions"><div class="save-note">Основное изображение остаётся сверху. Весь новый контент будет ниже него.</div><button id="saveAboutSettings" class="primary-btn large" type="button">Сохранить ABOUT</button></div>
+      </section>
+
+      <section id="instagramEditor" class="editor-form" hidden>
+        <section class="device-card">
+          <div class="device-card-head"><div><span class="device-badge">INSTAGRAM</span><h2>Ссылка Instagram в меню</h2></div></div>
+          <div class="simple-admin-form">
+            <label class="field"><span>Ссылка на Instagram</span><input id="instagramUrl" type="url" placeholder="https://instagram.com/..."></label>
+            <p class="admin-help-text">Эта ссылка используется в пункте INSTAGRAM верхнего меню сайта.</p>
+          </div>
+        </section>
+      </section>
+
+      <section id="contactEditor" class="editor-form" hidden>
+        <section class="device-card">
+          <div class="device-card-head"><div><span class="device-badge">КОНТАКТЫ</span><h2>Страница контактов</h2></div><a class="secondary-btn" href="/contact.html" target="_blank" rel="noreferrer">Открыть страницу ↗</a></div>
+          <div class="contact-admin-grid">
+            <label class="field"><span>Заголовок EN</span><input id="contactTitleEn"></label>
+            <label class="field"><span>Заголовок RU</span><input id="contactTitleRu"></label>
+            <label class="field span-2"><span>Текст EN</span><textarea id="contactTextEn" rows="4"></textarea></label>
+            <label class="field span-2"><span>Текст RU</span><textarea id="contactTextRu" rows="4"></textarea></label>
+            <label class="field"><span>Email</span><input id="contactEmailAdmin" type="email"></label>
+            <label class="field"><span>Телефон</span><input id="contactPhoneAdmin" placeholder="+33 ..."></label>
+            <label class="field"><span>Адрес EN</span><input id="contactAddressEn"></label>
+            <label class="field"><span>Адрес RU</span><input id="contactAddressRu"></label>
+          </div>
+        </section>
+      </section>
+
+
+      <section id="supportEditor" class="editor-form" hidden>
+        <section class="device-card support-admin-card">
+          <div class="device-card-head">
+            <div><span class="device-badge">ПОДДЕРЖКА</span><h2>Окно SUPPORT</h2></div>
+            <a class="secondary-btn" href="/" target="_blank" rel="noreferrer">Открыть сайт ↗</a>
+          </div>
+          <div class="support-admin-grid">
+            <section class="support-admin-controls">
+              <h3>Тексты</h3>
+              <div class="form-grid two">
+                <label class="field"><span>Текст кнопки EN</span><input id="supportButtonTextEn" value="SUPPORT"></label>
+                <label class="field"><span>Текст кнопки RU</span><input id="supportButtonTextRu" value="ПОДДЕРЖКА"></label>
+                <label class="field span-2"><span>Сообщение EN</span><input id="supportGreetingEn" value="Thanks for stopping by! How can I help you?"></label>
+                <label class="field span-2"><span>Сообщение RU</span><input id="supportGreetingRu" value="Спасибо, что заглянули! Чем я могу помочь?"></label>
+              </div>
+
+              <h3>Фон, поля и шрифты</h3>
+              <div class="form-grid two">
+                <label class="field span-2"><span>Фон окна — фото или видео</span><input id="supportBackgroundImage" placeholder="/assets/images/support-cross-pattern.png"></label>
+                <label class="upload-btn span-2"><input id="supportBackgroundFile" type="file" accept="image/*,video/mp4,video/webm,video/quicktime"><span>Загрузить фото / видео для фона</span></label>
+                <label class="field"><span>Фон кнопки</span><input id="supportButtonBg" type="color" value="#000000"></label>
+                <label class="field"><span>Цвет текста кнопки</span><input id="supportButtonColor" type="color" value="#ffffff"></label>
+                <label class="field"><span>Фон блока почты</span><input id="supportFieldBg" type="color" value="#000000"></label>
+                <label class="field"><span>Цвет почты</span><input id="supportFieldColor" type="color" value="#ffffff"></label>
+                <label class="field"><span>Шрифт кнопки</span><select id="supportButtonFont" class="font-select" data-default-label="Текущий дизайн"></select></label>
+                <label class="field"><span>Шрифт окна</span><select id="supportWindowFont" class="font-select" data-default-label="Текущий дизайн"></select></label>
+              </div>
+            </section>
+            <section class="support-admin-preview-wrap">
+              <h3>Предпросмотр</h3>
+              <div id="supportAdminPreview" class="support-admin-preview">
+                <div class="support-preview-brand">DEMI DEVILLE</div>
+                <div class="support-preview-body">
+                  <div id="supportPreviewGreeting" class="support-preview-greeting">Thanks for stopping by! How can I help you?</div>
+                  <div id="supportPreviewEmail" class="support-preview-field support-preview-message" style="display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;text-transform:none">support@demideville.com</div>
+                </div>
+              </div>
+              <button id="supportPreviewButton" class="support-preview-button" type="button">SUPPORT</button>
+            </section>
+          </div>
+        </section>
+        <div class="form-actions"><div class="save-note">Изменения применяются одновременно к ПК и телефону.</div><button id="saveSupportSettings" class="primary-btn large" type="button">Сохранить поддержку</button></div>
+      </section>
+
+      <section id="ordersEditor" class="editor-form" hidden>
+        <section class="device-card">
+          <div class="device-card-head"><div><span class="device-badge">ЗАКАЗЫ</span><h2>Заказы клиентов</h2></div></div>
+          <div class="orders-admin-toolbar"><input id="ordersSearch" type="search" placeholder="Поиск по номеру, email или имени"><select id="ordersStatusFilter"><option value="">Все статусы</option><option value="new">new</option><option value="processing">processing</option><option value="paid">paid</option><option value="shipped">shipped</option><option value="completed">completed</option><option value="cancelled">cancelled</option></select></div>
+          <div id="ordersAdminList" class="orders-admin-list"></div>
+        </section>
+      </section>
+
+      <section id="clientsEditor" class="editor-form" hidden>
+        <section class="device-card">
+          <div class="device-card-head"><div><span class="device-badge">КЛИЕНТЫ</span><h2>Зарегистрированные клиенты</h2></div></div>
+          <div class="clients-admin-head"><span>Клиент, его заказы и персональные купоны на скидку.</span></div>
+          <div id="clientsAdminList" class="clients-admin-list"></div>
+        </section>
+      </section>
+
+      <section id="paymentEditor" class="editor-form" hidden>
+        <section class="device-card">
+          <div class="device-card-head">
+            <div><span class="device-badge">ОПЛАТА</span><h2>Способы оплаты</h2></div>
+            <a class="secondary-btn" href="/checkout.html" target="_blank" rel="noreferrer">Открыть оплату ↗</a>
+          </div>
+          <div class="payment-admin-toolbar">
+            <div class="admin-help-text">Добавляйте, изменяйте или удаляйте способы оплаты. Порядок здесь совпадает с порядком на странице оформления заказа.</div>
+            <button id="addPaymentMethod" class="secondary-btn" type="button">+ Добавить способ</button>
+          </div>
+          <div id="paymentMethodsEditor" class="payment-methods-editor"></div>
+          <div class="simple-admin-form" style="margin-top:22px">
+            <h3>Страны доставки</h3>
+            <p class="admin-help-text">Россия и Беларусь исключены. Список полностью редактируемый: чтобы удалить страну — удалите строку, чтобы добавить — впишите новую страну с новой строки.</p>
+            <label class="field"><span>Страны — по одной на строку</span><textarea id="checkoutCountriesList" rows="14"></textarea></label>
+          </div>
+        </section>
+        <div class="form-actions payment-actions">
+          <div class="save-note">На странице оплаты должен оставаться минимум один способ.</div>
+          <button id="savePaymentSettings" class="primary-btn large" type="button">Сохранить способы оплаты</button>
+        </div>
+      </section>
+
+
+
+    </main>
+  </div>
+
+  <div id="productModal" class="admin-modal" hidden>
+    <div class="admin-modal-backdrop" data-close-product-modal></div>
+    <section class="admin-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="productModalTitle">
+      <header class="admin-modal-head">
+        <div>
+          <div class="eyebrow">Редактор товара</div>
+          <h2 id="productModalTitle">Новый товар</h2>
+        </div>
+        <button class="modal-close" type="button" data-close-product-modal aria-label="Закрыть">×</button>
+      </header>
+      <form id="productEditorForm" class="product-editor-form">
+        <input id="productOriginalId" type="hidden">
+        <div class="product-editor-grid">
+          <section class="product-editor-section">
+            <h3>Основная информация</h3>
+            <div class="form-grid two">
+              <label class="field"><span>ID / slug товара</span><input id="productId" type="text" placeholder="my-product"></label>
+              <label class="field"><span>Режим цены</span><select id="productPriceMode"><option value="number">Числом</option><option value="text">Текстом</option><option value="hidden">Скрыть цену</option></select></label>
+              <label class="field"><span>Цена для расчёта</span><input id="productPriceAdmin" type="number" min="0" step="0.01" value="0"></label>
+              <label class="field"><span>Текст цены EN</span><input id="productPriceTextEn" placeholder="Price on request"></label>
+              <label class="field"><span>Текст цены RU</span><input id="productPriceTextRu" placeholder="Цена по запросу"></label>
+              <label class="check-control"><input id="productPurchasable" type="checkbox" checked> Разрешить покупку онлайн</label>
+              <label class="field"><span>Название EN</span><input id="productNameEn" type="text" required></label>
+              <label class="field"><span>Название RU</span><input id="productNameRu" type="text"></label>
+              <label class="field"><span>Материал / состав EN</span><input id="productFabricEn" type="text"></label>
+              <label class="field"><span>Материал / состав RU</span><input id="productFabricRu" type="text"></label>
+              <label class="field span-2"><span>Описание EN</span><textarea id="productDescriptionEn" rows="4"></textarea></label>
+              <label class="field span-2"><span>Описание RU</span><textarea id="productDescriptionRu" rows="4"></textarea></label>
+              <label class="field"><span>Порядок сортировки</span><input id="productSort" type="number" min="0" step="1" value="0"></label>
+              <label class="check-control product-visible-check"><input id="productActive" type="checkbox" checked> Показывать товар на сайте</label>
+            </div>
+          </section>
+
+          <section class="product-editor-section">
+            <div class="section-title-row"><h3>Разделы / категории</h3><span class="section-note">Товар может быть сразу в нескольких разделах.</span></div>
+            <div id="productCategoryChecks" class="category-checks"></div>
+          </section>
+
+          <section class="product-editor-section">
+            <div class="section-title-row"><h3>Изображения</h3><span class="section-note">Первое изображение используется как основное.</span></div>
+            <label class="upload-btn multi-upload-btn">
+              <input id="productImagesUpload" type="file" accept="image/*,video/mp4,video/webm,video/quicktime" multiple>
+              <span>+ Загрузить фото / видео</span>
+            </label>
+            <div id="productImagesPreview" class="product-images-preview"></div>
+          </section>
+
+          <section class="product-editor-section">
+            <div class="section-title-row">
+              <div><h3>Размеры и количество</h3><div class="section-note">Размер с количеством 0 автоматически не показывается клиенту.</div></div>
+              <button id="addProductSize" class="secondary-btn small" type="button">+ Добавить размер</button>
+            </div>
+            <div id="productSizesEditor" class="sizes-editor"></div>
+          </section>
+        </div>
+        <footer class="admin-modal-footer">
+          <button id="deleteProductAdmin" class="danger-btn" type="button" hidden>Удалить товар</button>
+          <div class="modal-footer-spacer"></div>
+          <button class="secondary-btn" type="button" data-close-product-modal>Отмена</button>
+          <button class="primary-btn" type="submit">Сохранить товар</button>
+        </footer>
+      </form>
+    </section>
+  </div>
+
+  <script src="/assets/js/admin.js?v=20260919-fix-v27"></script>
+</body>
+</html>

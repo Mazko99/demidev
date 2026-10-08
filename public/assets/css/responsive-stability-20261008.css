@@ -1,0 +1,192 @@
+/* 2026-10-08: narrow, additive fixes. HOME and CMS are deliberately untouched.
+   All internal pages share one proportional layout instead of stretched text/media. */
+@media (min-width:901px){
+  html body.shared-chrome-page:not(.shop-page) > #desktopHeader.site-header{
+    max-width:100vw!important;
+    min-height:64px!important;
+  }
+  html body.shared-chrome-page > #desktopHeader.site-header .nav-side:not(.right),
+  html body.shared-chrome-page > #desktopHeader.site-header .nav-side.right{
+    gap:clamp(12px,2.1vw,40px)!important;
+  }
+  html body.shared-chrome-page > #desktopHeader.site-header .nav-side > a:not(.global-cart-icon){
+    font-size:clamp(12px,1.04vw,20px)!important;
+    white-space:nowrap!important;
+  }
+  /* Protect the central logo from navigation, particularly with longer RU words. */
+  html[lang="ru"] body.shared-chrome-page > #desktopHeader.site-header .nav-side > a:not(.global-cart-icon){
+    font-size:clamp(12px,.91vw,18px)!important;
+  }
+}
+
+/* PRODUCT: independent X/Y scaling and inverse-scaling placed desktop copy under
+   the right-hand frame at 901–1300px. Use two responsive columns, no squeezing. */
+@media (min-width:901px){
+  html body.product-detail-page{height:auto!important;min-height:100dvh!important;overflow-x:hidden!important;overflow-y:auto!important;}
+  html body.product-detail-page #productPageShell.product-page-shell{
+    position:relative!important;display:block!important;width:100%!important;
+    min-height:100dvh!important;height:auto!important;margin:0!important;
+    overflow:visible!important;
+  }
+  html body.product-detail-page #productPage.product-page{
+    position:relative!important;left:auto!important;top:auto!important;
+    box-sizing:border-box!important;width:100%!important;min-width:0!important;
+    height:auto!important;min-height:100dvh!important;
+    padding:clamp(135px,13vh,190px) clamp(20px,4.8vw,94px) 110px!important;
+    display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+    gap:clamp(35px,5vw,112px)!important;align-items:start!important;
+    transform:none!important;overflow:visible!important;
+  }
+  html body.product-detail-page #productPage .product-visual{
+    position:relative!important;left:auto!important;top:auto!important;
+    width:100%!important;max-width:543px!important;height:auto!important;min-height:0!important;
+    margin:0 auto!important;transform:none!important;overflow:visible!important;
+    display:flex!important;flex-direction:column!important;align-items:center!important;
+  }
+  html body.product-detail-page #productPage .product-visual>img#productImage,
+  html body.product-detail-page #productPage .product-visual>video#productImage{
+    position:relative!important;display:block!important;
+    width:100%!important;max-width:543px!important;height:auto!important;max-height:none!important;
+    object-fit:contain!important;object-position:center top!important;
+    transform:none!important;
+  }
+  html body.product-detail-page #productPage .product-info{
+    position:relative!important;left:auto!important;top:auto!important;
+    width:100%!important;min-width:0!important;max-width:606px!important;
+    margin:0 auto!important;padding:0!important;transform:none!important;
+    overflow:visible!important;
+  }
+  html body.product-detail-page #productPage .product-info h1,
+  html body.product-detail-page #productPage .product-info h1 .product-title-shape,
+  html body.product-detail-page #productPage .product-info .big-price,
+  html body.product-detail-page #productPage .product-info .big-price .product-price-shape{
+    display:block!important;box-sizing:border-box!important;width:100%!important;max-width:100%!important;
+    white-space:normal!important;overflow-wrap:break-word!important;
+    text-overflow:clip!important;transform:none!important;
+    font-size:clamp(18px,1.3vw,25px)!important;
+    line-height:1.25!important;
+  }
+  html body.product-detail-page #productPage .product-info .rule,
+  html body.product-detail-page #productPage .product-info .field-label,
+  html body.product-detail-page #productPage .product-info .size-picker,
+  html body.product-detail-page #productPage .product-info .size-toggle,
+  html body.product-detail-page #productPage .product-info .btn-black,
+  html body.product-detail-page #productPage .product-info .accordion,
+  html body.product-detail-page #productPage .product-info .acc-item{
+    box-sizing:border-box!important;width:100%!important;max-width:100%!important;
+    min-width:0!important;transform:none!important;
+  }
+  html body.product-detail-page #productPage .product-info .size-picker:not([hidden]){
+    position:relative!important;display:block!important;height:auto!important;min-height:46px!important;
+    margin:0 0 10px!important;visibility:visible!important;opacity:1!important;
+    overflow:visible!important;z-index:25!important;
+  }
+  html body.product-detail-page #productPage .product-info #sizeToggle:not([hidden]){
+    position:relative!important;display:block!important;
+    height:clamp(46px,3vw,56px)!important;min-height:46px!important;
+    visibility:visible!important;opacity:1!important;pointer-events:auto!important;
+    background:#fff!important;border:1px solid #111!important;color:#000!important;
+    cursor:pointer!important;z-index:26!important;
+  }
+  html body.product-detail-page #productPage .product-info .size-picker.open .size-menu{
+    display:block!important;visibility:visible!important;opacity:1!important;
+    position:absolute!important;left:0!important;top:100%!important;right:0!important;
+    max-height:min(300px,42vh)!important;overflow-y:auto!important;
+    width:100%!important;z-index:50!important;
+  }
+  html body.product-detail-page #productPage .product-info .btn-black{
+    position:relative!important;display:block!important;min-height:46px!important;
+    z-index:1!important;pointer-events:auto!important;
+  }
+  html body.product-detail-page #productPage .product-info .acc-trigger{
+    white-space:normal!important;overflow-wrap:break-word!important;
+  }
+  html body.product-detail-page #productPage .product-info .acc-content{
+    white-space:normal!important;overflow-wrap:anywhere!important;
+  }
+}
+
+/* LOGIN: keep the devil art / form reference proportional. The responsive
+   factor is uniform and capped, and the page may scroll on short screens. */
+@media (min-width:901px){
+  html body.login-page{position:relative!important;inset:auto!important;
+    height:auto!important;min-height:100dvh!important;overflow-x:hidden!important;overflow-y:auto!important;}
+  html body.login-page #loginCanvas.login-canvas{
+    position:relative!important;inset:auto!important;left:auto!important;top:auto!important;
+    box-sizing:border-box!important;width:100%!important;min-width:0!important;
+    height:100dvh!important;min-height:600px!important;
+    margin:0!important;transform:none!important;overflow:visible!important;
+  }
+  html body.login-page #loginCanvas .login-wrap{
+    position:absolute!important;left:50%!important;top:50%!important;inset:auto!important;
+    width:1098px!important;height:616px!important;
+    transform:translate(-50%,-50%) scale(var(--login-uniform-scale,1))!important;
+    transform-origin:center center!important;overflow:visible!important;
+  }
+  html body.login-page #loginCanvas .auth-stack,
+  html body.login-page #loginCanvas .auth-form{box-sizing:border-box!important;}
+}
+
+/* SHOP: product cards, page numbers and legal links stay in normal page flow
+   on phones instead of floating up over product names or being clipped. */
+@media (max-width:900px){
+  html body.shop-page .shop-stage,
+  html body.shop-page .shop-canvas{height:auto!important;min-height:100dvh!important;overflow:visible!important;}
+  html body.shop-page .shop-wrap{
+    display:flex!important;flex-direction:column!important;
+    min-height:calc(100dvh - 84px)!important;height:auto!important;
+    padding-bottom:0!important;overflow:visible!important;
+  }
+  html body.shop-page .product-grid{position:relative!important;flex:0 0 auto!important;}
+  html body.shop-page .shop-footer{
+    position:relative!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;
+    display:flex!important;flex-direction:column!important;align-items:center!important;
+    flex:0 0 auto!important;width:100%!important;max-width:100%!important;height:auto!important;
+    margin:auto auto 0!important;padding:34px 10px max(20px,env(safe-area-inset-bottom))!important;
+    transform:none!important;background:transparent!important;box-sizing:border-box!important;
+    overflow:visible!important;z-index:20!important;
+  }
+  html body.shop-page .shop-footer .shop-pagination{
+    position:relative!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;
+    display:flex!important;align-items:center!important;justify-content:center!important;
+    width:auto!important;height:auto!important;min-height:34px!important;margin:0 auto!important;
+  }
+  html body.shop-page .shop-footer .shop-legal-links{
+    position:relative!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;
+    display:flex!important;justify-content:center!important;align-items:center!important;flex-wrap:wrap!important;
+    width:auto!important;max-width:calc(100vw - 24px)!important;
+    margin:10px auto 0!important;padding:0!important;
+    transform:none!important;white-space:normal!important;text-align:center!important;
+  }
+  html body.shop-page .shop-footer .shop-legal-links a{max-width:100%!important;white-space:normal!important;}
+  html body.product-detail-page .product-info .size-picker:not([hidden]){
+    position:relative!important;display:block!important;min-height:44px!important;
+    overflow:visible!important;visibility:visible!important;z-index:28!important;
+  }
+  html body.product-detail-page #sizeToggle:not([hidden]){
+    display:block!important;width:100%!important;min-height:44px!important;height:44px!important;
+    border:1px solid #111!important;background:#fff!important;color:#111!important;
+    visibility:visible!important;opacity:1!important;pointer-events:auto!important;
+  }
+  html body.product-detail-page .size-picker.open .size-menu{
+    display:block!important;visibility:visible!important;opacity:1!important;
+    z-index:100!important;position:absolute!important;top:100%!important;left:0!important;
+    width:100%!important;max-height:250px!important;overflow-y:auto!important;
+  }
+}
+
+/* Translation is based on one dataset, not separately authored mobile-only copy. */
+html[lang="ru"] body.shop-page .product-card .product-reference-copy{
+  display:none!important;
+}
+html[lang="ru"] body.shop-page .product-card .product-live-copy,
+html[lang="ru"] body.shop-page .product-card .product-name,
+html[lang="ru"] body.shop-page .product-card .product-price{
+  visibility:visible!important;opacity:1!important;
+  text-transform:none!important;overflow-wrap:anywhere!important;
+}
+html body.shared-chrome-page:not(.shop-page) .product-info,
+html body.shared-chrome-page:not(.shop-page) .auth-stack,
+html body.shared-chrome-page:not(.shop-page) .legal-page{
+  max-width:100%;overflow-wrap:break-word;
+}
