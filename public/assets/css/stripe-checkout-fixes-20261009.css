@@ -1,0 +1,49 @@
+/* DEMI DEVILLE — safe Stripe checkout selection. Scoped to checkout only. */
+body.checkout-page .pay-methods.dynamic-payments .pay-chip{
+  box-sizing:border-box!important;display:flex!important;align-items:center!important;
+  justify-content:center!important;gap:5px!important;position:absolute!important;
+  padding:0 25px 0 9px!important;line-height:1.15!important;
+  white-space:normal!important;cursor:pointer!important;
+  transition:box-shadow .16s,opacity .16s!important;
+}
+body.checkout-page .pay-chip .pay-chip-label{display:block;max-width:100%;line-height:1.2!important;text-align:center;}
+body.checkout-page .pay-chip .pay-chip-check{
+  display:none;position:absolute;top:50%;right:5px;transform:translateY(-50%);
+  width:18px;height:18px;line-height:1!important;background:white;color:black;
+  border:1px solid white;font:700 14px/17px Arial,sans-serif;
+  text-align:center;
+}
+body.checkout-page .pay-methods.dynamic-payments .pay-chip.active{
+  box-shadow:inset 0 0 0 2px white,0 0 0 2px black!important;
+}
+body.checkout-page .pay-chip.active .pay-chip-check{display:block;}
+body.checkout-page .pay-methods.dynamic-payments .pay-chip.unavailable{
+  opacity:.4!important;cursor:not-allowed!important;
+}
+body.checkout-page .pay-chip:focus-visible{outline:3px solid #777!important;outline-offset:3px!important;}
+body.checkout-page .checkout-account-notice,
+body.checkout-page .checkout-feedback{
+  position:fixed!important;left:50%!important;bottom:max(20px, env(safe-area-inset-bottom))!important;
+  transform:translateX(-50%)!important;z-index:1500!important;
+  max-width:min(560px,calc(100vw - 30px))!important;width:max-content!important;
+  box-sizing:border-box!important;min-height:0!important;padding:12px 18px!important;
+  border:1px solid #fff!important;background:#111!important;color:#fff!important;
+  font:400 13px/1.45 Arial,sans-serif!important;text-align:center!important;
+  box-shadow:0 3px 15px rgba(0,0,0,.23)!important;
+}
+body.checkout-page .checkout-account-notice a,
+body.checkout-page .checkout-feedback a{color:#fff!important;font-weight:bold!important;text-decoration:underline!important;}
+body.checkout-page .checkout-account-notice[hidden],
+body.checkout-page .checkout-feedback[hidden]{display:none!important;}
+body.checkout-page .checkout-feedback.is-error{border-color:#555!important;}
+body.checkout-page .checkout-form .review-btn:disabled{opacity:.65!important;cursor:wait!important;}
+body.checkout-page .order-success a{color:#111;text-decoration:underline;}
+@media(max-width:900px){
+  body.checkout-page .pay-methods.dynamic-payments .pay-chip:nth-child(n){
+    position:relative!important;padding:5px 20px 5px 5px!important;
+    height:44px!important;font-size:clamp(11px,2.8vw,16px)!important;
+  }
+  body.checkout-page .pay-chip .pay-chip-check{width:15px;height:15px;font-size:12px;line-height:14px;right:3px;}
+  body.checkout-page .checkout-account-notice,
+  body.checkout-page .checkout-feedback{bottom:max(65px,env(safe-area-inset-bottom))!important;}
+}

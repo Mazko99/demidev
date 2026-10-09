@@ -84,3 +84,7 @@ html,body{scroll-behavior:auto}
 .side-panel{overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior:contain;scrollbar-gutter:stable}
 .side-nav{flex:0 0 auto}
 .side-bottom{flex:0 0 auto}
+/* Payment state is shown independently from merchant-fulfillment status. */
+.order-payment-indicator{font-weight:700!important;border:1px solid currentColor;padding:3px 7px;display:inline-flex;align-items:center;gap:5px}
+
+.order-admin-delivery{padding:5px 0 9px;font:400 13px/1.5 Arial,sans-serif;overflow-wrap:anywhere;}

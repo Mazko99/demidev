@@ -8,8 +8,10 @@
   const DEFAULT_PAYMENT_METHODS=[{id:'paypal',labelEn:'PayPal',labelRu:'PayPal',enabled:true},{id:'applepay',labelEn:'ApplePay',labelRu:'ApplePay',enabled:true},{id:'googlepay',labelEn:'GooglePay',labelRu:'GooglePay',enabled:true},{id:'crypto',labelEn:'Crypto payment',labelRu:'Оплата криптовалютой',enabled:true},{id:'card',labelEn:'Card payment',labelRu:'Оплата картой',enabled:true}];
   const configured=Array.isArray(site.settings?.paymentMethods)&&site.settings.paymentMethods.length?site.settings.paymentMethods:DEFAULT_PAYMENT_METHODS;
   const paymentMethods=configured.filter(m=>m&&m.enabled!==false).map((m,i)=>({id:String(m.id||`payment-${i+1}`),labelEn:String(m.labelEn||m.label||`Payment ${i+1}`),labelRu:String(m.labelRu||m.labelEn||m.label||`Оплата ${i+1}`)}));
-  if(!paymentMethods.length)paymentMethods.push(DEFAULT_PAYMENT_METHODS[4]);
-  let pay=paymentMethods[0].id;
+  const stripeMethods=new Set(['card','applepay','googlepay','stripe']);
+  // Keep administrator-configured buttons visible, but do not accept an unintegrated payment as successful.
+  const available=paymentMethods.filter(m=>stripeMethods.has(m.id.toLowerCase()));
+  let pay=available.find(m=>m.id==='card')?.id||available[0]?.id||'';
   let appliedCoupon=null;
   let discountAmount=0;
   const currentUser=window.ddCurrentUser?await window.ddCurrentUser():null;
@@ -18,7 +20,30 @@
   const countries=[...new Set(configuredCountries.map(x=>String(x||'').trim()).filter(x=>x&&!/^(russia|belarus)$/i.test(x)))];
   const countrySelect=document.querySelector('#checkoutForm [name=country]');
   if(countrySelect){countrySelect.innerHTML=countries.map(name=>`<option value="${esc(name)}">${esc(name)}</option>`).join('');const preferred=['Ukraine','Germany','Poland'].find(name=>countries.includes(name));if(preferred)countrySelect.value=preferred}
-  if(currentUser?.email){const emailInput=document.querySelector('#checkoutForm [name=email]');if(emailInput)emailInput.value=currentUser.email}
+  const emailInput=document.querySelector('#checkoutForm [name=email]');
+  if(currentUser?.email&&emailInput){emailInput.value=currentUser.email;emailInput.readOnly=true;emailInput.setAttribute('title','Your account email');}
+  // Preserve the entire delivery form while a guest signs in and returns to checkout.
+  const savedDraft=(()=>{try{return JSON.parse(sessionStorage.getItem('dd_checkout_draft')||'null')}catch{return null}})();
+  if(savedDraft?.form){
+    const form=document.querySelector('#checkoutForm');
+    Object.entries(savedDraft.form).forEach(([name,value])=>{
+      const control=Array.from(form.elements).find(el=>el.name===name&&el.type!=='checkbox');
+      if(control&&!(name==='email'&&currentUser))control.value=String(value??'');
+    });
+  }
+  const saveFormDraft=()=>{
+    const form=document.querySelector('#checkoutForm'),draft={};
+    new FormData(form).forEach((value,name)=>{draft[name]=String(value)});
+    sessionStorage.setItem('dd_checkout_draft',JSON.stringify({form:draft,payment:pay}));
+  };
+  if(!currentUser){
+    const notice=document.querySelector('#checkoutAccountNotice');
+    if(notice){document.body.appendChild(notice);notice.hidden=false;notice.innerHTML=document.documentElement.lang==='ru'
+      ?'Для оплаты и сохранения заказа в личном кабинете <a href="/login.html?next=checkout">войдите или зарегистрируйтесь</a>.'
+      :'To pay and see your order in your account, <a href="/login.html?next=checkout">sign in or register</a>.';
+      notice.querySelector('a')?.addEventListener('click',()=>{saveFormDraft();sessionStorage.setItem('dd_checkout_return','1')});
+    }
+  }
 
   const preferredCheckoutImage=p=>{
     const known={
@@ -33,6 +58,7 @@
 
   const payBox=$('#paymentMethods');
   const payLabel=m=>document.documentElement.lang==='ru'?(m.labelRu||m.labelEn):(m.labelEn||m.labelRu);
+  if(savedDraft?.payment&&available.some(m=>m.id===savedDraft.payment))pay=savedDraft.payment;
   if(payBox){
     payBox.classList.add(`pay-count-${Math.min(paymentMethods.length,12)}`);
     const rows=Math.max(1,Math.ceil(paymentMethods.length/3));
@@ -40,15 +66,18 @@
     payBox.style.setProperty('--pay-form-top',`${20+rows*54}px`);
     payBox.innerHTML=paymentMethods.map((m,i)=>{
       const row=Math.floor(i/3),start=row*3,count=Math.min(3,paymentMethods.length-start),index=i-start;
-      const gap=9,width=(535-gap*(count-1))/count,left=index*(width+gap);
-      return `<button type="button" class="pay-chip${i===0?' active':''}" data-pay="${esc(m.id)}" style="--pay-left:${left}px;--pay-top:${row*54}px;--pay-width:${width}px">${esc(payLabel(m))}</button>`;
+      const gap=9,width=(535-gap*(count-1))/count,left=index*(width+gap),supported=stripeMethods.has(m.id.toLowerCase());
+      return `<button type="button" class="pay-chip${pay===m.id?' active':''}${supported?'':' unavailable'}" data-pay="${esc(m.id)}"
+        style="--pay-left:${left}px;--pay-top:${row*54}px;--pay-width:${width}px" aria-pressed="${pay===m.id}"
+        ${supported?'':'disabled title="Payment integration not connected"'}>
+        <span class="pay-chip-label">${esc(payLabel(m))}</span><span class="pay-chip-check" aria-hidden="true">✓</span>
+      </button>`;
     }).join('');
   }
-  $$('.pay-chip').forEach(b=>b.onclick=()=>{
-    $$('.pay-chip').forEach(x=>x.classList.remove('active'));
-    b.classList.add('active');
-    pay=b.dataset.pay;
-  });
+  $$('.pay-chip:not(:disabled)').forEach(b=>b.addEventListener('click',()=>{
+    $$('.pay-chip').forEach(x=>{x.classList.remove('active');x.setAttribute('aria-pressed','false')});
+    b.classList.add('active');b.setAttribute('aria-pressed','true');pay=b.dataset.pay;
+  }));
 
   function draw(){
     list.innerHTML=cart.map(x=>{
@@ -78,12 +107,40 @@
 
   const checkoutParams=new URLSearchParams(location.search);
   const returnedStripeSession=String(checkoutParams.get('stripe_session_id')||'').trim();
+  const feedback=$('#checkoutFeedback');
+  // Checkout's desktop stage is transformed; port the fixed feedback outside it.
+  if(feedback)document.body.appendChild(feedback);
+  const showFeedback=(message,isError=false)=>{
+    if(!feedback)return;
+    feedback.textContent=message;feedback.hidden=false;
+    feedback.classList.toggle('is-error',isError);
+  };
+  if(checkoutParams.has('stripe_cancelled')){
+    showFeedback(document.documentElement.lang==='ru'?'Оплата отменена. Вы можете попробовать снова.':'Payment cancelled. Your cart has been preserved.',true);
+    history.replaceState(null,'','/checkout.html');
+  }
   if(returnedStripeSession){
+    showFeedback(document.documentElement.lang==='ru'?'Проверяем статус оплаты…':'Checking payment status…');
     try{
-      const r=await fetch(`/api/stripe/confirm?session_id=${encodeURIComponent(returnedStripeSession)}`,{headers:{...authHeaders()}});const d=await r.json().catch(()=>({}));
+      const r=await fetch(`/api/stripe/confirm?session_id=${encodeURIComponent(returnedStripeSession)}`,{headers:{...authHeaders()}});
+      const d=await r.json().catch(()=>({}));
       if(!r.ok)throw new Error(d.error||'Could not confirm payment');
-      if(d.paid){cartSet([]);const success=$('#orderSuccess');if(success){success.innerHTML=`Payment received. Order <strong>${esc(d.order?.number||'')}</strong> created.`;success.classList.add('show')}history.replaceState(null,'','/checkout.html')}
-    }catch(err){console.error('Stripe confirmation failed:',err)}
+      if(d.paid){
+        cartSet([]);sessionStorage.removeItem('dd_checkout_draft');
+        const success=$('#orderSuccess');
+        if(success){success.innerHTML=(document.documentElement.lang==='ru'
+          ?`Оплата получена. Заказ <strong>${esc(d.order?.number||'')}</strong> добавлен в <a href="/account.html">личный кабинет</a>.`
+          :`Payment received. Order <strong>${esc(d.order?.number||'')}</strong> is available in <a href="/account.html">your account</a>.`);
+          success.classList.add('show');}
+        showFeedback(document.documentElement.lang==='ru'?'Оплата подтверждена.':'Payment confirmed.');
+      }else{
+        showFeedback(document.documentElement.lang==='ru'?'Платеж еще обрабатывается. Статус заказа будет обновлен автоматически.':'Payment processing. Your order status will update automatically.');
+      }
+      history.replaceState(null,'','/checkout.html');
+    }catch(err){
+      console.error('Stripe confirmation failed:',err);
+      showFeedback(document.documentElement.lang==='ru'?'Не удалось проверить оплату. Проверьте заказ в личном кабинете.':'Could not check payment. See the order status in your account.',true);
+    }
   }
 
   $('#mobileOrderToggle')?.addEventListener('click',e=>{
@@ -105,6 +162,11 @@
   $('#checkoutForm').addEventListener('submit',async e=>{
     e.preventDefault();
     if(!cart.length)return alert(window.ddTranslate?.('Your bag is empty.')||'Your bag is empty.');
+    if(!pay){showFeedback('No connected online payment methods. Please contact the store.',true);return}
+    if(!currentUser||currentUser.role!=='customer'){
+      saveFormDraft();sessionStorage.setItem('dd_checkout_return','1');
+      location.href='/login.html?next=checkout';return;
+    }
     const f=new FormData(e.target);
     const body={
       email:f.get('email'),
@@ -122,19 +184,19 @@
         phone:f.get('phone')
       }
     };
-    const useStripe=['card','applepay','googlepay','stripe'].includes(String(pay||'').toLowerCase());
-    const endpoint=useStripe?'/api/stripe/checkout':'/api/orders';
-    const submit=e.target.querySelector('button[type=submit]');if(submit)submit.disabled=true;
+    const submit=e.target.querySelector('button[type=submit]');
+    if(submit)submit.disabled=true;
+    showFeedback(document.documentElement.lang==='ru'?'Создаём безопасную страницу оплаты…':'Opening secure payment…');
     try{
-      const r=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json',...authHeaders()},body:JSON.stringify(body)});
+      const r=await fetch('/api/stripe/checkout',{method:'POST',headers:{'Content-Type':'application/json',...authHeaders()},body:JSON.stringify(body)});
       const d=await r.json().catch(()=>({}));
       if(!r.ok)throw new Error(d.error||'Could not create order');
-      if(useStripe){if(!d.url)throw new Error('Stripe checkout URL was not returned.');location.href=d.url;return}
-      cartSet([]);
-      const s=$('#orderSuccess');
-      s.innerHTML=`Order <strong>${esc(d.order?.number||'')}</strong> created.`;
-      s.classList.add('show');
-    }catch(err){if(submit)submit.disabled=false;alert(window.ddTranslate?.(err.message||'Could not create order')||err.message||'Could not create order')}
+      if(!d.url||!/^https:\/\/checkout\.stripe\.com\//.test(d.url))throw new Error('Invalid Stripe Checkout URL returned.');
+      saveFormDraft();location.assign(d.url);
+    }catch(err){
+      if(submit)submit.disabled=false;
+      showFeedback(err.message||'Could not start payment.',true);
+    }
   });
 
   /* Header and support are provided by renderChrome() in common.js. */

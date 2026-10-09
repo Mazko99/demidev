@@ -751,7 +751,7 @@ async function saveSupportSettings(){
 }
 $('#saveSupportSettings')?.addEventListener('click',saveSupportSettings);
 
-const ORDER_STATUSES=['new','processing','paid','shipped','completed','cancelled'];
+const ORDER_STATUSES=['new','payment_pending','payment_failed','payment_expired','processing','paid','shipped','completed','cancelled'];
 function renderOrdersAdmin(){
   const box=$('#ordersAdminList');if(!box)return;
   const q=String($('#ordersSearch')?.value||'').trim().toLowerCase();const filter=String($('#ordersStatusFilter')?.value||'');
@@ -760,10 +760,23 @@ function renderOrdersAdmin(){
   if(!orders.length){box.innerHTML='<div class="empty-admin-list">Заказов пока нет.</div>';return}
   box.innerHTML=orders.map(o=>{
     const customer=o.customer||{};const name=[customer.firstName,customer.lastName].filter(Boolean).join(' ')||customer.name||'';
+    const address=[customer.address,customer.apartment,customer.city,customer.postalCode,customer.country].filter(Boolean).join(', ');
     const items=(o.items||[]).map(i=>`<div class="order-item-admin"><span>${esc(i.nameRu||i.name||'Товар')}</span><span>${esc(i.size||'—')} × ${Number(i.qty)||1}</span><strong>${adminMoney((Number(i.price)||0)*(Number(i.qty)||1),settings.currency||'$')}</strong></div>`).join('');
-    return `<article class="order-admin-card" data-order-id="${esc(o.id)}"><div class="order-admin-head"><div><strong>${esc(o.number||o.id)}</strong><div>${o.createdAt?new Date(o.createdAt).toLocaleString('ru-RU'):''}</div></div><div class="order-admin-total">${adminMoney(o.total,settings.currency||'$')}</div></div><div class="order-admin-meta"><span>${esc(name||'Без имени')}</span><span>${esc(o.email||'')}</span><span>${esc(customer.phone||'')}</span><span>${esc(o.paymentMethod||'')}</span>${o.couponCode?`<span>Купон: ${esc(o.couponCode)}</span>`:''}</div><div class="order-admin-items">${items||'<span>Нет товаров</span>'}</div><label class="field order-status-field"><span>Статус</span><select data-order-status>${ORDER_STATUSES.map(st=>`<option value="${st}" ${String(o.status||'new')===st?'selected':''}>${st}</option>`).join('')}</select></label></article>`;
+    return `<article class="order-admin-card" data-order-id="${esc(o.id)}"><div class="order-admin-head"><div><strong>${esc(o.number||o.id)}</strong><div>${o.createdAt?new Date(o.createdAt).toLocaleString('ru-RU'):''}</div></div><div class="order-admin-total">${adminMoney(o.total,settings.currency||'$')}</div></div><div class="order-admin-meta"><span>${esc(name||'Без имени')}</span><span>${esc(o.email||'')}</span><span>${esc(customer.phone||'')}</span><span>${esc(o.paymentMethod||'')}${o.selectedPaymentMethod?' / '+esc(o.selectedPaymentMethod):''}</span><span class="order-payment-indicator">${esc(o.paymentStatus==='paid'?'✓ ОПЛАЧЕНО':o.paymentMethod==='Stripe'?'⌛ '+(o.paymentStatus==='expired'?'СРОК ОПЛАТЫ ИСТЁК':o.paymentStatus==='failed'?'ОПЛАТА НЕ ПРОШЛА':'ОЖИДАЕТ ОПЛАТЫ'):'ОПЛАТА НЕ ПОДТВЕРЖДЕНА')}</span>${o.couponCode?`<span>Купон: ${esc(o.couponCode)}</span>`:''}</div><div class="order-admin-delivery">${address?`<strong>Доставка:</strong> ${esc(address)}`:''}</div><div class="order-admin-items">${items||'<span>Нет товаров</span>'}</div><label class="field order-status-field"><span>Статус</span><select data-order-status>${ORDER_STATUSES.map(st=>`<option value="${st}" ${String(o.status||'new')===st?'selected':''}>${st}</option>`).join('')}</select></label></article>`;
   }).join('');
 }
+// Orders are written into PostgreSQL by Stripe's webhook and appear automatically
+// while the Orders tab is open. No full admin page reload is needed.
+let ordersRefreshInProgress=false;
+async function refreshOrdersFromServer(){
+  if(ordersRefreshInProgress||currentAdminTab!=='orders'||document.hidden||!token)return;
+  ordersRefreshInProgress=true;
+  try{const state=await api('/api/admin/state');adminState.orders=Array.isArray(state.orders)?state.orders:[];renderOrdersAdmin()}
+  catch(e){console.warn('Orders refresh failed:',e.message)}
+  finally{ordersRefreshInProgress=false}
+}
+setInterval(refreshOrdersFromServer,15000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshOrdersFromServer()});
 $('#ordersSearch')?.addEventListener('input',renderOrdersAdmin);
 $('#ordersStatusFilter')?.addEventListener('change',renderOrdersAdmin);
 $('#ordersAdminList')?.addEventListener('change',async e=>{

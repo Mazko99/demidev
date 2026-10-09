@@ -87,6 +87,9 @@
     if(!r.ok)return show(d.error||'Registration failed');
     storeToken(d.token,!!f.get('remember'));
     show('Account created.',true);
+    if(sessionStorage.getItem('dd_checkout_return')==='1'){
+      sessionStorage.removeItem('dd_checkout_return');location.assign('/checkout.html');return;
+    }
     showUser(d.user);
   });
 
@@ -102,6 +105,9 @@
     if(!r.ok)return show(d.error||'Login failed');
     storeToken(d.token,!!f.get('remember'));
     show('Logged in.',true);
+    if(sessionStorage.getItem('dd_checkout_return')==='1'){
+      sessionStorage.removeItem('dd_checkout_return');location.assign('/checkout.html');return;
+    }
     showUser(d.user);
   });
 

@@ -292,9 +292,39 @@ function siteBaseUrl(req){const configured=String(process.env.PUBLIC_SITE_URL||p
 function stripeApi(method,pathname,form){return new Promise((resolve,reject)=>{const secret=stripeSecret();if(!secret)return reject(Object.assign(new Error('Stripe is not configured.'),{code:'STRIPE_NOT_CONFIGURED'}));const body=form instanceof URLSearchParams?form.toString():'';const req=https.request({hostname:'api.stripe.com',port:443,path:pathname,method,headers:{Authorization:`Bearer ${secret}`,'Content-Type':'application/x-www-form-urlencoded','Content-Length':Buffer.byteLength(body),'User-Agent':'DEMI-DEVILLE/1.0'}},res=>{const parts=[];res.on('data',c=>parts.push(c));res.on('end',()=>{const raw=Buffer.concat(parts).toString('utf8');let data={};try{data=raw?JSON.parse(raw):{}}catch{data={raw}}if(res.statusCode>=200&&res.statusCode<300)return resolve(data);const err=new Error(data?.error?.message||`Stripe HTTP ${res.statusCode}`);err.statusCode=res.statusCode;err.stripe=data;reject(err)})});req.on('error',reject);if(body)req.write(body);req.end()})}
 function stripeVerifySignature(raw,header,secret,toleranceSec=300){const parts=String(header||'').split(',').map(x=>x.trim());const t=parts.find(x=>x.startsWith('t='))?.slice(2);const signatures=parts.filter(x=>x.startsWith('v1=')).map(x=>x.slice(3));if(!t||!signatures.length)return false;const ts=Number(t);if(!Number.isFinite(ts)||Math.abs(Date.now()/1000-ts)>toleranceSec)return false;const expected=crypto.createHmac('sha256',secret).update(`${t}.${raw.toString('utf8')}`,'utf8').digest('hex');return signatures.some(sig=>{try{return crypto.timingSafeEqual(Buffer.from(expected,'hex'),Buffer.from(sig,'hex'))}catch{return false}})}
 function stripePaymentMethod(id){return ['card','applepay','googlepay','stripe'].includes(String(id||'').toLowerCase())}
+function matchesStripeSession(order, session){
+  // Never trust an order ID alone: it must match the Checkout Session, currency and amount.
+  if(!order||!session?.id||!String(session.id).startsWith('cs_'))return false;
+  if(order.paymentMethod!=='Stripe')return false;
+  if(order.stripeSessionId&&order.stripeSessionId!==session.id)return false;
+  if(String(session.metadata?.order_id||session.client_reference_id||'')!==String(order.id))return false;
+  const expectedCurrency=stripeCurrency(order.currency||'$');
+  return String(session.currency||'').toLowerCase()===expectedCurrency
+    && Number(session.amount_total)===stripeMinorAmount(order.total,expectedCurrency)
+    && Number(session.amount_total)>0;
+}
 function orderDraftFromRequest(db,user,b){if(!Array.isArray(b.items)||!b.items.length)throw Object.assign(new Error('Cart is empty.'),{statusCode:400});let subtotal=0;const items=[];for(const x of b.items){const prod=db.products.find(q=>String(q.id)===String(x.productId)&&q.active!==false);if(!prod)continue;if(!productPurchasable(prod))throw Object.assign(new Error(`${prod.name} is not available for online purchase.`),{statusCode:400});const qty=Math.max(1,Math.min(99,Math.floor(Number(x.qty)||1))),size=String(x.size||'').trim(),variants=productVariants(prod);if(Array.isArray(prod.variants)&&prod.variants.length){const variant=variants.find(v=>v.size.toUpperCase()===size.toUpperCase());if(!variant||(variant.stock!==null&&variant.stock<=0))throw Object.assign(new Error(`Size ${size||'—'} is out of stock for ${prod.name}.`),{statusCode:409});if(variant.stock!==null&&qty>variant.stock)throw Object.assign(new Error(`Only ${variant.stock} item(s) left for ${prod.name}, size ${variant.size}.`),{statusCode:409})}subtotal+=(Number(prod.price)||0)*qty;const images=productImages(prod);items.push({productId:prod.id,name:prod.name,nameRu:prod.nameRu||'',price:Number(prod.price)||0,qty,size,image:images[0]||prod.image||''})}if(!items.length)throw Object.assign(new Error('Cart is empty.'),{statusCode:400});let coupon=null,discount=0,couponCode='';if(String(b.couponCode||'').trim()){if(!user)throw Object.assign(new Error('Log in to use this coupon.'),{statusCode:401});coupon=couponForUser(db,user,b.couponCode);if(!coupon)throw Object.assign(new Error('Coupon is not available for this account.'),{statusCode:400});const percent=Math.max(1,Math.min(95,Math.floor(Number(coupon.percent)||0)));discount=Math.round(subtotal*percent)/100;couponCode=coupon.code}const shipping=Number(db.settings.shipping||0),total=Math.max(0,subtotal-discount+shipping);return {items,subtotal,discount,couponCode,shipping,total}}
 function commitOrderStock(db,order){if(order.stockCommitted)return;for(const item of order.items||[]){const prod=db.products.find(q=>String(q.id)===String(item.productId));if(!prod||!Array.isArray(prod.variants)||!prod.variants.length)continue;const raw=prod.variants.find(v=>String(v?.size||'').trim().toUpperCase()===String(item.size||'').trim().toUpperCase());if(!raw)continue;const stock=raw.stock===null||raw.stock===undefined||raw.stock===''?null:Math.max(0,Math.floor(Number(raw.stock)||0));if(stock!==null)raw.stock=Math.max(0,stock-Math.max(1,Number(item.qty)||1));prod.sizes=productVariants(prod).filter(v=>v.stock===null||v.stock>0).map(v=>String(v.size))}order.stockCommitted=true}
-async function finalizeStripeOrder(db,session){const orderId=String(session?.metadata?.order_id||session?.client_reference_id||'');const order=(db.orders||[]).find(o=>String(o.id)===orderId||String(o.stripeSessionId)===String(session?.id||''));if(!order)return null;if(session?.payment_status==='paid'||session?.status==='complete'){if(order.paymentStatus!=='paid'){commitOrderStock(db,order);order.paymentStatus='paid';order.status='paid';order.paidAt=now();order.stripePaymentIntent=session.payment_intent||order.stripePaymentIntent||'';await saveDb(db);try{if(order.email)await sendTransactionalMail({to:order.email,subject:`DEMI DEVILLE order ${order.number}`,text:`Payment received for order ${order.number}. Total: ${order.total}${db.settings.currency||'$'}.`})}catch(err){console.error('Stripe paid email failed:',err.message)}}}return order}
+async function finalizeStripeOrder(db,session){
+  const orderId=String(session?.metadata?.order_id||session?.client_reference_id||'');
+  const order=(db.orders||[]).find(o=>String(o.id)===orderId);
+  if(!matchesStripeSession(order,session))return null;
+  // status=complete means that Checkout finished, NOT that an asynchronous payment cleared.
+  if(session.payment_status!=='paid')return order;
+  if(order.paymentStatus==='paid')return order; // Webhooks may be retried. Never subtract stock twice.
+  order.stripeSessionId=session.id;
+  commitOrderStock(db,order);
+  order.paymentStatus='paid';
+  order.status='paid';
+  order.paidAt=now();
+  order.stripePaymentIntent=session.payment_intent||order.stripePaymentIntent||'';
+  await saveDb(db);
+  try{
+    if(order.email)await sendTransactionalMail({to:order.email,subject:`DEMI DEVILLE order ${order.number}`,text:`Payment received for order ${order.number}. Total: ${order.total}${order.currency||db.settings.currency||'$'}.`});
+  }catch(err){console.error('Stripe paid email failed:',err.message)}
+  return order;
+}
+
 function needUser(req,res,admin=false){const db=loadDb(),user=currentUser(req,db);if(!user){sendJson(res,401,{error:'Unauthorized'});return null}if(admin&&user.role!=='admin'){sendJson(res,403,{error:'Admin only'});return null}return {db,user}}
 
 let SMTP_TRANSPORTER=null;
@@ -413,20 +443,85 @@ async function handleApi(req,res,u){
     }
   }
   if(m==='POST'&&p==='/api/stripe/checkout'){
-    if(!stripeSecret())return sendJson(res,503,{error:'Stripe is not configured on the server. Set STRIPE_SECRET_KEY in Railway Variables.'});
-    const b=await readJson(req),db=loadDb(),user=currentUser(req,db);let draft;try{draft=orderDraftFromRequest(db,user,b)}catch(err){return sendJson(res,err.statusCode||400,{error:err.message||'Could not prepare payment.'})}
-    const order={id:id(),number:`DD-${String(Date.now()).slice(-8)}`,userId:user?.id||null,email:b.email||user?.email||'',customer:b.customer||{},items:draft.items,subtotal:draft.subtotal,discount:draft.discount,couponCode:draft.couponCode,shipping:draft.shipping,total:draft.total,paymentMethod:'Stripe',paymentStatus:'unpaid',status:'payment_pending',createdAt:now()};
+    if(!stripeSecret())return sendJson(res,503,{error:'Stripe is not configured on Render. Set STRIPE_SECRET_KEY.'});
+    const b=await readJson(req),db=loadDb(),user=currentUser(req,db);
+    // Checkout is tied to a real signed-in account so orders appear in its cabinet.
+    if(!user||user.role!=='customer')return sendJson(res,401,{error:'Please sign in to your customer account before payment.'});
+    if(!stripePaymentMethod(b.paymentMethod))return sendJson(res,400,{error:'This payment method is not connected. Please choose a Stripe payment option.'});
+    const enabled=(db.settings.paymentMethods||[]).some(pm=>pm.id===b.paymentMethod&&pm.enabled!==false);
+    if(!enabled)return sendJson(res,400,{error:'Selected payment method is currently unavailable.'});
+    const buyerEmail=String(b.email||'').trim().toLowerCase();
+    if(buyerEmail!==String(user.email||'').trim().toLowerCase())return sendJson(res,400,{error:'Use the email from your customer account for checkout.'});
+    const customer=b.customer&&typeof b.customer==='object'?b.customer:{};
+    const required=['country','firstName','lastName','address','postalCode','city','phone'];
+    if(required.some(key=>!String(customer[key]||'').trim()))return sendJson(res,400,{error:'Please fill in all required delivery fields.'});
+    let draft;try{draft=orderDraftFromRequest(db,user,b)}catch(err){return sendJson(res,err.statusCode||400,{error:err.message||'Could not prepare payment.'})}
+    const currency=stripeCurrency(db.settings.currency),unitAmount=stripeMinorAmount(draft.total,currency);
+    if(unitAmount<=0)return sendJson(res,400,{error:'Order total must be greater than zero.'});
+    const order={id:id(),number:`DD-${Date.now()}-${crypto.randomBytes(2).toString('hex')}`,userId:user.id,email:user.email,
+      customer:{...customer},items:draft.items,subtotal:draft.subtotal,discount:draft.discount,couponCode:draft.couponCode,
+      shipping:draft.shipping,total:draft.total,currency:db.settings.currency||'$',paymentMethod:'Stripe',
+      selectedPaymentMethod:b.paymentMethod,paymentStatus:'unpaid',status:'payment_pending',createdAt:now()};
     db.orders.unshift(order);await saveDb(db);
-    const currency=stripeCurrency(db.settings.currency),unitAmount=stripeMinorAmount(order.total,currency);if(unitAmount<=0){db.orders=db.orders.filter(o=>o.id!==order.id);await saveDb(db);return sendJson(res,400,{error:'Order total must be greater than zero.'})}
-    const form=new URLSearchParams();const base=siteBaseUrl(req);form.set('mode','payment');form.set('success_url',`${base}/checkout.html?stripe_session_id={CHECKOUT_SESSION_ID}`);form.set('cancel_url',`${base}/checkout.html?stripe_cancelled=1`);form.set('client_reference_id',order.id);form.set('metadata[order_id]',order.id);if(order.email)form.set('customer_email',order.email);form.set('line_items[0][price_data][currency]',currency);form.set('line_items[0][price_data][unit_amount]',String(unitAmount));form.set('line_items[0][price_data][product_data][name]',`DEMI DEVILLE order ${order.number}`);const desc=(order.items||[]).map(x=>`${x.name}${x.size?` (${x.size})`:''} ×${x.qty}`).join(', ').slice(0,500);if(desc)form.set('line_items[0][price_data][product_data][description]',desc);form.set('line_items[0][quantity]','1');
-    try{const session=await stripeApi('POST','/v1/checkout/sessions',form);order.stripeSessionId=session.id||'';order.stripeCheckoutUrl=session.url||'';await saveDb(db);return sendJson(res,200,{ok:true,orderId:order.id,sessionId:session.id,url:session.url})}catch(err){db.orders=db.orders.filter(o=>o.id!==order.id);await saveDb(db);console.error('Stripe checkout failed:',err.message);return sendJson(res,502,{error:err.message||'Could not start Stripe checkout.'})}
+    const form=new URLSearchParams(),base=siteBaseUrl(req);
+    form.set('mode','payment');
+    form.set('success_url',`${base}/checkout.html?stripe_session_id={CHECKOUT_SESSION_ID}`);
+    form.set('cancel_url',`${base}/checkout.html?stripe_cancelled=1`);
+    form.set('client_reference_id',order.id);
+    form.set('metadata[order_id]',order.id);
+    form.set('customer_email',user.email);
+    form.set('line_items[0][price_data][currency]',currency);
+    form.set('line_items[0][price_data][unit_amount]',String(unitAmount));
+    form.set('line_items[0][price_data][product_data][name]',`DEMI DEVILLE order ${order.number}`);
+    const desc=(order.items||[]).map(x=>`${x.name}${x.size?` (${x.size})`:''} ×${x.qty}`).join(', ').slice(0,500);
+    if(desc)form.set('line_items[0][price_data][product_data][description]',desc);
+    form.set('line_items[0][quantity]','1');
+    try{
+      const session=await stripeApi('POST','/v1/checkout/sessions',form);
+      if(!session.id||!session.url)throw new Error('Stripe Checkout URL was not returned.');
+      // A webhook may arrive while create-session is in flight: do not reset a paid order.
+      if(order.stripeSessionId&&order.stripeSessionId!==session.id)throw new Error('Stripe session mismatch.');
+      order.stripeSessionId=session.id;order.stripeCheckoutUrl=session.url;await saveDb(db);
+      return sendJson(res,200,{ok:true,orderId:order.id,sessionId:session.id,url:session.url});
+    }catch(err){
+      if(order.paymentStatus!=='paid'){order.paymentStatus='failed';order.status='payment_failed';await saveDb(db)}
+      console.error('Stripe checkout failed:',err.message);
+      return sendJson(res,502,{error:err.message||'Could not start Stripe checkout.'});
+    }
   }
   if(m==='GET'&&p==='/api/stripe/confirm'){
-    if(!stripeSecret())return sendJson(res,503,{error:'Stripe is not configured on the server.'});const sessionId=String(u.searchParams.get('session_id')||'').trim();if(!/^cs_/.test(sessionId))return sendJson(res,400,{error:'Invalid Stripe session.'});
-    try{const session=await stripeApi('GET',`/v1/checkout/sessions/${encodeURIComponent(sessionId)}`,new URLSearchParams());const db=loadDb(),order=await finalizeStripeOrder(db,session);if(!order)return sendJson(res,404,{error:'Order not found.'});return sendJson(res,200,{ok:true,paid:order.paymentStatus==='paid',order:{id:order.id,number:order.number,status:order.status,paymentStatus:order.paymentStatus,total:order.total}})}catch(err){console.error('Stripe confirm failed:',err.message);return sendJson(res,502,{error:err.message||'Could not confirm Stripe payment.'})}
+    if(!stripeSecret())return sendJson(res,503,{error:'Stripe is not configured on the server.'});
+    const db=loadDb(),user=currentUser(req,db);
+    if(!user)return sendJson(res,401,{error:'Sign in to view your payment status.'});
+    const sessionId=String(u.searchParams.get('session_id')||'').trim();
+    if(!/^cs_(test_)?[a-zA-Z0-9]+$/.test(sessionId))return sendJson(res,400,{error:'Invalid Stripe session.'});
+    try{
+      const session=await stripeApi('GET',`/v1/checkout/sessions/${encodeURIComponent(sessionId)}`,new URLSearchParams());
+      const order=await finalizeStripeOrder(db,session);
+      if(!order||String(order.userId)!==String(user.id))return sendJson(res,404,{error:'Order not found.'});
+      return sendJson(res,200,{ok:true,paid:order.paymentStatus==='paid',order:{id:order.id,number:order.number,status:order.status,paymentStatus:order.paymentStatus,total:order.total}});
+    }catch(err){console.error('Stripe confirm failed:',err.message);return sendJson(res,502,{error:err.message||'Could not confirm Stripe payment.'})}
   }
   if(m==='POST'&&p==='/api/stripe/webhook'){
-    const secret=String(process.env.STRIPE_WEBHOOK_SECRET||'').trim();if(!secret)return sendJson(res,503,{error:'Stripe webhook is not configured.'});const raw=await readRaw(req);if(!stripeVerifySignature(raw,req.headers['stripe-signature'],secret))return sendJson(res,400,{error:'Invalid Stripe signature.'});let event;try{event=JSON.parse(raw.toString('utf8'))}catch{return sendJson(res,400,{error:'Invalid webhook JSON.'})}const session=event?.data?.object;if(event?.type==='checkout.session.completed'||event?.type==='checkout.session.async_payment_succeeded'){await finalizeStripeOrder(loadDb(),session)}else if(event?.type==='checkout.session.expired'){const db=loadDb(),order=(db.orders||[]).find(o=>String(o.stripeSessionId)===String(session?.id||''));if(order&&order.paymentStatus!=='paid'){order.paymentStatus='expired';order.status='payment_expired';await saveDb(db)}}return sendJson(res,200,{received:true})
+    const secret=String(process.env.STRIPE_WEBHOOK_SECRET||'').trim();
+    if(!secret)return sendJson(res,503,{error:'Stripe webhook is not configured.'});
+    const raw=await readRaw(req);
+    if(!stripeVerifySignature(raw,req.headers['stripe-signature'],secret))return sendJson(res,400,{error:'Invalid Stripe signature.'});
+    let event;try{event=JSON.parse(raw.toString('utf8'))}catch{return sendJson(res,400,{error:'Invalid webhook JSON.'})}
+    const session=event?.data?.object,db=loadDb();
+    if(event?.type==='checkout.session.completed'||event?.type==='checkout.session.async_payment_succeeded'){
+      const order=await finalizeStripeOrder(db,session);
+      if(!order)console.warn('Stripe event with unknown or mismatched order/session:',event?.id||'');
+    }else if(event?.type==='checkout.session.expired'||event?.type==='checkout.session.async_payment_failed'){
+      const order=db.orders.find(o=>matchesStripeSession(o,session));
+      if(order&&order.paymentStatus!=='paid'){
+        order.stripeSessionId=session.id;
+        order.paymentStatus=event.type==='checkout.session.expired'?'expired':'failed';
+        order.status=event.type==='checkout.session.expired'?'payment_expired':'payment_failed';
+        await saveDb(db);
+      }
+    }
+    return sendJson(res,200,{received:true});
   }
   if(m==='POST'&&p==='/api/orders'){
     const b=await readJson(req),db=loadDb(),user=currentUser(req,db);
@@ -541,7 +636,11 @@ async function handleApi(req,res,u){
   const cm=p.match(/^\/api\/admin\/coupons\/([^/]+)$/);
   if(cm&&m==='DELETE'){const a=needUser(req,res,true);if(!a)return;const cid=decodeURIComponent(cm[1]);if(!Array.isArray(a.db.coupons))a.db.coupons=[];a.db.coupons=a.db.coupons.filter(c=>String(c.id)!==String(cid));await saveDb(a.db);return sendJson(res,200,{ok:true})}
   if(cm&&m==='PUT'){const a=needUser(req,res,true);if(!a)return;const b=await readJson(req);const c=(a.db.coupons||[]).find(x=>String(x.id)===String(decodeURIComponent(cm[1])));if(!c)return sendJson(res,404,{error:'Coupon not found'});if(b.percent!=null)c.percent=Math.max(1,Math.min(95,Math.floor(Number(b.percent)||0)));if(b.active!=null)c.active=!!b.active;if(b.note!=null)c.note=String(b.note||'');await saveDb(a.db);return sendJson(res,200,sanitizeCoupon(c))}
-  const om=p.match(/^\/api\/admin\/orders\/([^/]+)$/);if(om&&m==='PUT'){const a=needUser(req,res,true);if(!a)return;const b=await readJson(req),o=a.db.orders.find(x=>x.id===decodeURIComponent(om[1]));if(!o)return sendJson(res,404,{error:'Order not found'});const previousStatus=String(o.status||'new');Object.assign(o,b);await saveDb(a.db);if(o.email&&b.status&&String(o.status)!==previousStatus){try{await sendTransactionalMail({to:o.email,subject:`DEMI DEVILLE order ${o.number||''}`,text:`Order ${o.number||''} status: ${o.status}.`})}catch(err){console.error('Order status email failed:',err.message)}}return sendJson(res,200,o)}
+  const om=p.match(/^\/api\/admin\/orders\/([^/]+)$/);if(om&&m==='PUT'){const a=needUser(req,res,true);if(!a)return;const b=await readJson(req),o=a.db.orders.find(x=>x.id===decodeURIComponent(om[1]));if(!o)return sendJson(res,404,{error:'Order not found'});const previousStatus=String(o.status||'new');
+    const allowed=['new','payment_pending','payment_failed','payment_expired','processing','paid','shipped','completed','cancelled'];
+    if(!allowed.includes(String(b.status||'')))return sendJson(res,400,{error:'Invalid status.'});
+    if(o.paymentMethod==='Stripe'&&b.status==='paid'&&o.paymentStatus!=='paid')return sendJson(res,400,{error:'Only Stripe can confirm that this order was paid.'});
+    o.status=b.status;await saveDb(a.db);if(o.email&&b.status&&String(o.status)!==previousStatus){try{await sendTransactionalMail({to:o.email,subject:`DEMI DEVILLE order ${o.number||''}`,text:`Order ${o.number||''} status: ${o.status}.`})}catch(err){console.error('Order status email failed:',err.message)}}return sendJson(res,200,o)}
   return sendJson(res,404,{error:'Not found'});
 }
 
