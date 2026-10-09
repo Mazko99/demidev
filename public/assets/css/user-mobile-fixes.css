@@ -1879,3 +1879,22 @@ body.gallery-page:not(.product-detail-page):not(.cart-page) .gallery-media video
 @media (max-width:900px){
   body.gallery-page:not(.product-detail-page):not(.cart-page) .gallery-media{width:100%!important;}
 }
+
+/* 2026-10-09: keep the shared mobile navigation fully accessible.
+   A legacy 330px fixed height with overflow:hidden clipped CART/REGISTER
+   (and any extra links added in the admin) on every storefront page. */
+@media (max-width:900px){
+  .home #homeMobileMenu.home-mobile-menu,
+  body.shared-chrome-page #mobileMenu.mobile-menu{
+    height:max-content!important;
+    min-height:0!important;
+    max-height:calc(100dvh - 12px - env(safe-area-inset-bottom, 0px))!important;
+    overflow-x:hidden!important;
+    overflow-y:auto!important;
+    overscroll-behavior-y:contain;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+  .home #homeMobileMenu.home-mobile-menu::-webkit-scrollbar,
+  body.shared-chrome-page #mobileMenu.mobile-menu::-webkit-scrollbar{display:none;}
+}
