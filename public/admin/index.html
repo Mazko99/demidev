@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>DEMI DEVILLE — Админ-панель</title>
-  <link rel="stylesheet" href="/assets/css/admin.css?v=20260918-v22">
+  <link rel="stylesheet" href="/assets/css/admin.css?v=20261009-orders-v1">
 </head>
 <body>
   <section id="loginView" class="auth-screen">
@@ -454,7 +454,9 @@
       <section id="ordersEditor" class="editor-form" hidden>
         <section class="device-card">
           <div class="device-card-head"><div><span class="device-badge">ЗАКАЗЫ</span><h2>Заказы клиентов</h2></div></div>
+          <div class="orders-global-delivery"><label for="ordersDefaultShipping"><strong>Доставка для новых заказов</strong><small>Сумма, которую увидит покупатель в Checkout. Изменения не затронут уже созданные платежи.</small></label><div class="orders-global-delivery-controls"><input id="ordersDefaultShipping" type="number" min="0" max="100000" step="0.01" inputmode="decimal" aria-label="Доставка для новых заказов"><span id="ordersShippingCurrency">$</span><button id="saveOrdersDefaultShipping" type="button" class="primary-btn">Сохранить</button></div></div>
           <div class="orders-admin-toolbar"><input id="ordersSearch" type="search" placeholder="Поиск по номеру, email или имени"><select id="ordersStatusFilter"><option value="">Все статусы</option><option value="new">new</option><option value="payment_pending">payment_pending</option><option value="payment_failed">payment_failed</option><option value="payment_expired">payment_expired</option><option value="processing">processing</option><option value="paid">paid</option><option value="shipped">shipped</option><option value="completed">completed</option><option value="cancelled">cancelled</option></select></div>
+          <label class="orders-archive-filter"><input id="ordersShowArchive" type="checkbox"> Показать удалённые (архив) <span>— удаление не отменяет оплату Stripe</span></label>
           <div id="ordersAdminList" class="orders-admin-list"></div>
         </section>
       </section>
@@ -560,6 +562,6 @@
     </section>
   </div>
 
-  <script src="/assets/js/admin.js?v=20261009-payment-status"></script>
+  <script src="/assets/js/admin.js?v=20261009-orders-v1"></script>
 </body>
 </html>

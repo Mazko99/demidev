@@ -130,7 +130,7 @@ async function boot(){
     const me=await api('/api/auth/me');
     if(me.user.role!=='admin')throw new Error('Доступ разрешён только администратору');
     $('#adminUser').textContent=me.user.email;$('#loginView').hidden=true;$('#loginView').style.display='none';$('#adminView').hidden=false;window.scrollTo(0,0);
-    const state=await api('/api/admin/state');adminState=state||{};settings=state.settings||{};productsDraft=Array.isArray(state.products)?state.products.map(clone):[];galleryDraft=Array.isArray(state.gallery)?state.gallery.map(clone):[];shopCategoriesDraft=normalizeShopCategories(settings.shopCategories);paymentMethodsDraft=normalizePaymentMethods(settings.paymentMethods);fillForm();fillShopEditor();fillGalleryEditor();fillAboutEditor();fillExternalEditors();fillSupportEditor();renderOrdersAdmin();renderClientsAdmin();renderPaymentEditor();renderPageBackgroundsEditor();switchAdminTab(currentAdminTab);
+    const state=await api('/api/admin/state');adminState=state||{};settings=state.settings||{};productsDraft=Array.isArray(state.products)?state.products.map(clone):[];galleryDraft=Array.isArray(state.gallery)?state.gallery.map(clone):[];shopCategoriesDraft=normalizeShopCategories(settings.shopCategories);paymentMethodsDraft=normalizePaymentMethods(settings.paymentMethods);fillForm();fillShopEditor();fillGalleryEditor();fillAboutEditor();fillExternalEditors();fillSupportEditor();syncOrdersDefaultShipping();renderOrdersAdmin();renderClientsAdmin();renderPaymentEditor();renderPageBackgroundsEditor();switchAdminTab(currentAdminTab);
   }catch(e){token='';showLogin(e.message)}
 }
 $('#adminLogin').addEventListener('submit',async e=>{
@@ -315,7 +315,7 @@ function switchAdminTab(tab){
   const saveTop=$('#saveTop');saveTop.hidden=currentAdminTab==='clients'||currentAdminTab==='orders';
   saveTop.textContent=currentAdminTab==='backgrounds'?'Сохранить фоны':currentAdminTab==='shop'?'Сохранить магазин':currentAdminTab==='gallery'?'Сохранить галерею':currentAdminTab==='about'?'Сохранить ABOUT':currentAdminTab==='instagram'?'Сохранить Instagram':currentAdminTab==='contact'?'Сохранить контакты':currentAdminTab==='support'?'Сохранить поддержку':currentAdminTab==='payment'?'Сохранить оплату':'Сохранить';
   if(currentAdminTab==='clients')renderClientsAdmin();
-  if(currentAdminTab==='orders')renderOrdersAdmin();
+  if(currentAdminTab==='orders'){syncOrdersDefaultShipping();renderOrdersAdmin();}
   if(currentAdminTab==='support')updateSupportPreview();
   if(currentAdminTab==='backgrounds')renderPageBackgroundsEditor();
 }
@@ -752,26 +752,48 @@ async function saveSupportSettings(){
 $('#saveSupportSettings')?.addEventListener('click',saveSupportSettings);
 
 const ORDER_STATUSES=['new','payment_pending','payment_failed','payment_expired','processing','paid','shipped','completed','cancelled'];
+function syncOrdersDefaultShipping(){
+  const input=$('#ordersDefaultShipping');
+  if(input&&document.activeElement!==input)input.value=String(Number(settings.shipping??0));
+  const label=$('#ordersShippingCurrency');if(label)label.textContent=settings.currency||'$';
+}
 function renderOrdersAdmin(){
   const box=$('#ordersAdminList');if(!box)return;
   const q=String($('#ordersSearch')?.value||'').trim().toLowerCase();const filter=String($('#ordersStatusFilter')?.value||'');
+  const archived=!!$('#ordersShowArchive')?.checked;
   let orders=Array.isArray(adminState.orders)?[...adminState.orders]:[];
-  orders=orders.filter(o=>{if(filter&&String(o.status)!==filter)return false;if(!q)return true;const hay=[o.number,o.email,o.customer?.firstName,o.customer?.lastName,o.customer?.name].join(' ').toLowerCase();return hay.includes(q)});
-  if(!orders.length){box.innerHTML='<div class="empty-admin-list">Заказов пока нет.</div>';return}
+  orders=orders.filter(o=>{
+    if(!!o.archivedAt!==archived)return false;
+    if(filter&&String(o.status)!==filter)return false;
+    if(!q)return true;
+    const hay=[o.number,o.email,o.customer?.firstName,o.customer?.lastName,o.customer?.name].join(' ').toLowerCase();return hay.includes(q);
+  });
+  if(!orders.length){box.innerHTML=`<div class="empty-admin-list">${archived?'В архиве заказов нет.':'Заказов пока нет.'}</div>`;return;}
   box.innerHTML=orders.map(o=>{
-    const customer=o.customer||{};const name=[customer.firstName,customer.lastName].filter(Boolean).join(' ')||customer.name||'';
+    const customer=o.customer||{},name=[customer.firstName,customer.lastName].filter(Boolean).join(' ')||customer.name||'';
     const address=[customer.address,customer.apartment,customer.city,customer.postalCode,customer.country].filter(Boolean).join(', ');
-    const items=(o.items||[]).map(i=>`<div class="order-item-admin"><span>${esc(i.nameRu||i.name||'Товар')}</span><span>${esc(i.size||'—')} × ${Number(i.qty)||1}</span><strong>${adminMoney((Number(i.price)||0)*(Number(i.qty)||1),settings.currency||'$')}</strong></div>`).join('');
-    return `<article class="order-admin-card" data-order-id="${esc(o.id)}"><div class="order-admin-head"><div><strong>${esc(o.number||o.id)}</strong><div>${o.createdAt?new Date(o.createdAt).toLocaleString('ru-RU'):''}</div></div><div class="order-admin-total">${adminMoney(o.total,settings.currency||'$')}</div></div><div class="order-admin-meta"><span>${esc(name||'Без имени')}</span><span>${esc(o.email||'')}</span><span>${esc(customer.phone||'')}</span><span>${esc(o.paymentMethod||'')}${o.selectedPaymentMethod?' / '+esc(o.selectedPaymentMethod):''}</span><span class="order-payment-indicator">${esc(o.paymentStatus==='paid'?'✓ ОПЛАЧЕНО':o.paymentMethod==='Stripe'?'⌛ '+(o.paymentStatus==='expired'?'СРОК ОПЛАТЫ ИСТЁК':o.paymentStatus==='failed'?'ОПЛАТА НЕ ПРОШЛА':'ОЖИДАЕТ ОПЛАТЫ'):'ОПЛАТА НЕ ПОДТВЕРЖДЕНА')}</span>${o.couponCode?`<span>Купон: ${esc(o.couponCode)}</span>`:''}</div><div class="order-admin-delivery">${address?`<strong>Доставка:</strong> ${esc(address)}`:''}</div><div class="order-admin-items">${items||'<span>Нет товаров</span>'}</div><label class="field order-status-field"><span>Статус</span><select data-order-status>${ORDER_STATUSES.map(st=>`<option value="${st}" ${String(o.status||'new')===st?'selected':''}>${st}</option>`).join('')}</select></label></article>`;
+    const items=(o.items||[]).map(i=>`<div class="order-item-admin"><span>${esc(i.nameRu||i.name||'Товар')}</span><span>${esc(i.size||'—')} × ${Number(i.qty)||1}</span><strong>${adminMoney((Number(i.price)||0)*(Number(i.qty)||1),o.currency||settings.currency||'$')}</strong></div>`).join('');
+    const currency=o.currency||settings.currency||'$',shipping=Number(o.shipping??0),cost=Number(o.deliveryCost??shipping);
+    const paymentLabel=o.paymentStatus==='paid'?'✓ ОПЛАЧЕНО':o.paymentMethod==='Stripe'?'⌛ '+(o.paymentStatus==='expired'?'СРОК ОПЛАТЫ ИСТЁК':o.paymentStatus==='failed'?'ОПЛАТА НЕ ПРОШЛА':'ОЖИДАЕТ ОПЛАТЫ'):'ОПЛАТА НЕ ПОДТВЕРЖДЕНА';
+    return `<article class="order-admin-card${archived?' is-archived':''}" data-order-id="${esc(o.id)}">
+      <div class="order-admin-head"><div><strong>${esc(o.number||o.id)}</strong><div>${o.createdAt?new Date(o.createdAt).toLocaleString('ru-RU'):''}</div></div><div class="order-admin-total">${adminMoney(o.total,currency)}</div></div>
+      <div class="order-admin-meta"><span>${esc(name||'Без имени')}</span><span>${esc(o.email||'')}</span><span>${esc(customer.phone||'')}</span><span>${esc(o.paymentMethod||'')}${o.selectedPaymentMethod?' / '+esc(o.selectedPaymentMethod):''}</span><span class="order-payment-indicator">${esc(paymentLabel)}</span>${o.couponCode?`<span>Купон: ${esc(o.couponCode)}</span>`:''}</div>
+      <div class="order-admin-delivery">${address?`<strong>Адрес доставки:</strong> ${esc(address)}`:''}</div>
+      <div class="order-admin-items">${items||'<span>Нет товаров</span>'}</div>
+      <div class="order-delivery-editor"><div class="order-delivery-heading"><strong>Стоимость доставки</strong><small>С покупателя рассчитано: ${adminMoney(shipping,currency)}. Изменение ниже — только для внутреннего учёта, сумма оплаты не меняется.</small></div>
+        <div class="order-delivery-controls"><input type="number" min="0" max="100000" step="0.01" inputmode="decimal" data-order-delivery-cost value="${esc(cost.toFixed(2))}" aria-label="Стоимость доставки для учёта"><span class="order-delivery-currency">${esc(currency)}</span><button class="secondary-btn" data-order-save-delivery type="button" ${archived?'disabled':''}>Сохранить доставку</button></div></div>
+      <div class="order-admin-actions"><label class="field order-status-field"><span>Статус</span><select data-order-status ${archived?'disabled':''}>${ORDER_STATUSES.map(st=>`<option value="${st}" ${String(o.status||'new')===st?'selected':''}>${st}</option>`).join('')}</select></label>
+        ${archived?'<button class="secondary-btn order-restore-btn" data-order-restore type="button">↶ Восстановить</button>':'<button class="order-delete-btn" data-order-delete type="button">Удалить заказ</button>'}</div>
+    </article>`;
   }).join('');
 }
-// Orders are written into PostgreSQL by Stripe's webhook and appear automatically
-// while the Orders tab is open. No full admin page reload is needed.
 let ordersRefreshInProgress=false;
 async function refreshOrdersFromServer(){
   if(ordersRefreshInProgress||currentAdminTab!=='orders'||document.hidden||!token)return;
+  // Do not interrupt an admin currently typing a delivery price or using a select.
+  if(document.activeElement?.closest?.('#ordersAdminList, .orders-global-delivery'))return;
   ordersRefreshInProgress=true;
-  try{const state=await api('/api/admin/state');adminState.orders=Array.isArray(state.orders)?state.orders:[];renderOrdersAdmin()}
+  try{const state=await api('/api/admin/state');adminState.orders=Array.isArray(state.orders)?state.orders:[];renderOrdersAdmin();}
   catch(e){console.warn('Orders refresh failed:',e.message)}
   finally{ordersRefreshInProgress=false}
 }
@@ -779,10 +801,48 @@ setInterval(refreshOrdersFromServer,15000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshOrdersFromServer()});
 $('#ordersSearch')?.addEventListener('input',renderOrdersAdmin);
 $('#ordersStatusFilter')?.addEventListener('change',renderOrdersAdmin);
+$('#ordersShowArchive')?.addEventListener('change',renderOrdersAdmin);
+$('#saveOrdersDefaultShipping')?.addEventListener('click',async e=>{
+  const input=$('#ordersDefaultShipping'),value=Number(input?.value);
+  if(!input||input.value.trim()===''||!Number.isFinite(value)||value<0||value>100000)return showNotice('Укажите стоимость доставки от 0 до 100000.','error');
+  e.currentTarget.disabled=true;
+  try{settings=await api('/api/admin/settings',{method:'PUT',body:JSON.stringify({shipping:Math.round(value*100)/100})});syncOrdersDefaultShipping();showNotice('Стоимость доставки для новых заказов сохранена.');}
+  catch(err){showNotice(err.message,'error')}finally{e.currentTarget.disabled=false}
+});
 $('#ordersAdminList')?.addEventListener('change',async e=>{
-  const select=e.target.closest('[data-order-status]');if(!select)return;const card=select.closest('[data-order-id]');if(!card)return;
+  const select=e.target.closest('[data-order-status]');if(!select)return;
+  const card=select.closest('[data-order-id]');if(!card)return;
   const order=(adminState.orders||[]).find(o=>String(o.id)===String(card.dataset.orderId));const prev=order?.status||'new';
-  try{const saved=await api(`/api/admin/orders/${encodeURIComponent(card.dataset.orderId)}`,{method:'PUT',body:JSON.stringify({status:select.value})});if(order)Object.assign(order,saved);showNotice('Статус заказа обновлён.')}catch(err){select.value=prev;showNotice(err.message,'error')}
+  select.disabled=true;
+  try{const saved=await api(`/api/admin/orders/${encodeURIComponent(card.dataset.orderId)}`,{method:'PUT',body:JSON.stringify({status:select.value})});if(order)Object.assign(order,saved);showNotice('Статус заказа обновлён.');}
+  catch(err){select.value=prev;showNotice(err.message,'error')}
+  finally{select.disabled=false}
+});
+$('#ordersAdminList')?.addEventListener('click',async e=>{
+  const card=e.target.closest('[data-order-id]');if(!card)return;
+  const order=(adminState.orders||[]).find(o=>String(o.id)===String(card.dataset.orderId));if(!order)return;
+  const url=`/api/admin/orders/${encodeURIComponent(card.dataset.orderId)}`;
+  const saveBtn=e.target.closest('[data-order-save-delivery]');
+  if(saveBtn){
+    const input=card.querySelector('[data-order-delivery-cost]'),value=Number(input?.value);
+    if(!input||input.value.trim()===''||!Number.isFinite(value)||value<0||value>100000)return showNotice('Неверная стоимость доставки.','error');
+    saveBtn.disabled=true;
+    try{const saved=await api(url,{method:'PUT',body:JSON.stringify({deliveryCost:Math.round(value*100)/100})});Object.assign(order,saved);renderOrdersAdmin();showNotice('Стоимость доставки в заказе сохранена. Сумма списания Stripe не изменена.');}
+    catch(err){showNotice(err.message,'error');saveBtn.disabled=false}
+    return;
+  }
+  if(e.target.closest('[data-order-delete]')){
+    if(!window.confirm(`Удалить заказ ${order.number||order.id} из списка?\nПлатёж Stripe не отменится. Запись останется в архиве.`))return;
+    const btn=e.target.closest('[data-order-delete]');btn.disabled=true;
+    try{const result=await api(url,{method:'DELETE'});Object.assign(order,result.order||{archivedAt:new Date().toISOString()});renderOrdersAdmin();showNotice('Заказ перемещён в архив.');}
+    catch(err){btn.disabled=false;showNotice(err.message,'error')}
+    return;
+  }
+  if(e.target.closest('[data-order-restore]')){
+    const btn=e.target.closest('[data-order-restore]');btn.disabled=true;
+    try{const saved=await api(url,{method:'PUT',body:JSON.stringify({restore:true})});Object.assign(order,saved);delete order.archivedAt;delete order.archivedBy;renderOrdersAdmin();showNotice('Заказ восстановлен.');}
+    catch(err){btn.disabled=false;showNotice(err.message,'error')}
+  }
 });
 
 function normalizePaymentMethods(raw){

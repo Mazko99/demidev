@@ -560,7 +560,7 @@ async function handleApi(req,res,u){
     return sendJson(res,200,{ok:true,order});
   }
   if(m==='GET'&&p==='/api/admin/state'){const a=needUser(req,res,true);if(!a)return;return sendJson(res,200,{settings:a.db.settings,products:a.db.products,gallery:a.db.gallery,sections:a.db.sections,orders:a.db.orders,supportMessages:Array.isArray(a.db.supportMessages)?a.db.supportMessages:[],users:a.db.users.map(sanitizeUser),coupons:(Array.isArray(a.db.coupons)?a.db.coupons:[]).map(sanitizeCoupon)});}
-  if(m==='PUT'&&p==='/api/admin/settings'){const a=needUser(req,res,true);if(!a)return;const b=await readJson(req);if(b.shopPageSize!=null)b.shopPageSize=Math.max(1,Math.min(8,Math.floor(Number(b.shopPageSize)||8)));if(Array.isArray(b.checkoutCountries)){b.checkoutCountries=[...new Set(b.checkoutCountries.map(x=>String(x||'').trim()).filter(x=>x&&!/^(russia|belarus)$/i.test(x)))];if(!b.checkoutCountries.length)b.checkoutCountries=[...DEFAULT_CHECKOUT_COUNTRIES]}if(b.pageBackgrounds!=null&&(!b.pageBackgrounds||typeof b.pageBackgrounds!=='object'||Array.isArray(b.pageBackgrounds)))b.pageBackgrounds={};a.db.settings={...a.db.settings,...b};await saveDb(a.db);return sendJson(res,200,a.db.settings);}
+  if(m==='PUT'&&p==='/api/admin/settings'){const a=needUser(req,res,true);if(!a)return;const b=await readJson(req);if(Object.prototype.hasOwnProperty.call(b,'shipping')){const amount=Number(b.shipping);if(b.shipping===''||b.shipping===null||!Number.isFinite(amount)||amount<0||amount>100000)return sendJson(res,400,{error:'Shipping must be between 0 and 100000.'});b.shipping=Math.round((amount+Number.EPSILON)*100)/100;}if(b.shopPageSize!=null)b.shopPageSize=Math.max(1,Math.min(8,Math.floor(Number(b.shopPageSize)||8)));if(Array.isArray(b.checkoutCountries)){b.checkoutCountries=[...new Set(b.checkoutCountries.map(x=>String(x||'').trim()).filter(x=>x&&!/^(russia|belarus)$/i.test(x)))];if(!b.checkoutCountries.length)b.checkoutCountries=[...DEFAULT_CHECKOUT_COUNTRIES]}if(b.pageBackgrounds!=null&&(!b.pageBackgrounds||typeof b.pageBackgrounds!=='object'||Array.isArray(b.pageBackgrounds)))b.pageBackgrounds={};a.db.settings={...a.db.settings,...b};await saveDb(a.db);return sendJson(res,200,a.db.settings);}
   if(m==='POST'&&p==='/api/admin/upload'){
     const a=needUser(req,res,true);if(!a)return;
     if(REQUIRE_PERSISTENT_MEDIA&&(!USE_POSTGRES||!PG_POOL))return sendJson(res,503,{error:'Persistent media storage is not connected. Set DATABASE_URL to PostgreSQL before uploading images or video.'});
@@ -636,11 +636,44 @@ async function handleApi(req,res,u){
   const cm=p.match(/^\/api\/admin\/coupons\/([^/]+)$/);
   if(cm&&m==='DELETE'){const a=needUser(req,res,true);if(!a)return;const cid=decodeURIComponent(cm[1]);if(!Array.isArray(a.db.coupons))a.db.coupons=[];a.db.coupons=a.db.coupons.filter(c=>String(c.id)!==String(cid));await saveDb(a.db);return sendJson(res,200,{ok:true})}
   if(cm&&m==='PUT'){const a=needUser(req,res,true);if(!a)return;const b=await readJson(req);const c=(a.db.coupons||[]).find(x=>String(x.id)===String(decodeURIComponent(cm[1])));if(!c)return sendJson(res,404,{error:'Coupon not found'});if(b.percent!=null)c.percent=Math.max(1,Math.min(95,Math.floor(Number(b.percent)||0)));if(b.active!=null)c.active=!!b.active;if(b.note!=null)c.note=String(b.note||'');await saveDb(a.db);return sendJson(res,200,sanitizeCoupon(c))}
-  const om=p.match(/^\/api\/admin\/orders\/([^/]+)$/);if(om&&m==='PUT'){const a=needUser(req,res,true);if(!a)return;const b=await readJson(req),o=a.db.orders.find(x=>x.id===decodeURIComponent(om[1]));if(!o)return sendJson(res,404,{error:'Order not found'});const previousStatus=String(o.status||'new');
-    const allowed=['new','payment_pending','payment_failed','payment_expired','processing','paid','shipped','completed','cancelled'];
-    if(!allowed.includes(String(b.status||'')))return sendJson(res,400,{error:'Invalid status.'});
-    if(o.paymentMethod==='Stripe'&&b.status==='paid'&&o.paymentStatus!=='paid')return sendJson(res,400,{error:'Only Stripe can confirm that this order was paid.'});
-    o.status=b.status;await saveDb(a.db);if(o.email&&b.status&&String(o.status)!==previousStatus){try{await sendTransactionalMail({to:o.email,subject:`DEMI DEVILLE order ${o.number||''}`,text:`Order ${o.number||''} status: ${o.status}.`})}catch(err){console.error('Order status email failed:',err.message)}}return sendJson(res,200,o)}
+  // Admin "delete" is a reversible archive. Retain Stripe transaction references and customer receipts.
+  // This prevents a delayed webhook from silently erasing a payment from the financial record.
+  const om=p.match(/^\/api\/admin\/orders\/([^/]+)$/);
+  if(om&&(m==='DELETE'||m==='PUT')){
+    const a=needUser(req,res,true);if(!a)return;
+    const o=a.db.orders.find(x=>String(x.id)===String(decodeURIComponent(om[1])));
+    if(!o)return sendJson(res,404,{error:'Order not found'});
+    if(m==='DELETE'){
+      if(o.archivedAt)return sendJson(res,200,{ok:true,archived:true,order:o});
+      o.archivedAt=now();o.archivedBy=a.user.id;
+      await saveDb(a.db);return sendJson(res,200,{ok:true,archived:true,order:o});
+    }
+    const b=await readJson(req);
+    if(b.restore===true){
+      delete o.archivedAt;delete o.archivedBy;await saveDb(a.db);
+      return sendJson(res,200,o);
+    }
+    if(o.archivedAt)return sendJson(res,409,{error:'Restore the archived order before editing it.'});
+    const previousStatus=String(o.status||'new');let statusChanged=false;
+    if(Object.prototype.hasOwnProperty.call(b,'status')){
+      const allowed=['new','payment_pending','payment_failed','payment_expired','processing','paid','shipped','completed','cancelled'];
+      if(!allowed.includes(String(b.status||'')))return sendJson(res,400,{error:'Invalid status.'});
+      if(o.paymentMethod==='Stripe'&&b.status==='paid'&&o.paymentStatus!=='paid')return sendJson(res,400,{error:'Only Stripe can confirm that this order was paid.'});
+      o.status=b.status;statusChanged=o.status!==previousStatus;
+    }
+    if(Object.prototype.hasOwnProperty.call(b,'deliveryCost')){
+      const amount=Number(b.deliveryCost);
+      if(b.deliveryCost===''||b.deliveryCost===null||!Number.isFinite(amount)||amount<0||amount>100000)return sendJson(res,400,{error:'Delivery cost must be between 0 and 100000.'});
+      // Internal logistics/fulfilment cost only. Never mutate the shipping charge,
+      // order total, or Stripe Checkout Session of an existing payment.
+      o.deliveryCost=Math.round((amount+Number.EPSILON)*100)/100;
+      o.deliveryCostUpdatedAt=now();o.deliveryCostUpdatedBy=a.user.id;
+    }
+    if(!Object.prototype.hasOwnProperty.call(b,'status')&&!Object.prototype.hasOwnProperty.call(b,'deliveryCost'))return sendJson(res,400,{error:'No editable order fields supplied.'});
+    await saveDb(a.db);
+    if(statusChanged&&o.email){try{await sendTransactionalMail({to:o.email,subject:`DEMI DEVILLE order ${o.number||''}`,text:`Order ${o.number||''} status: ${o.status}.`})}catch(err){console.error('Order status email failed:',err.message)}}
+    return sendJson(res,200,o);
+  }
   return sendJson(res,404,{error:'Not found'});
 }
 

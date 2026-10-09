@@ -93,7 +93,7 @@
     }).join('');
 
     const sub=cart.reduce((a,x)=>a+(Number(byId[String(x.productId)]?.price)||0)*(Number(x.qty)||1),0);
-    const ship=Number(site.settings?.shipping||30);
+    const ship=Number(site.settings?.shipping??30);
     $('#subtotal').textContent=money(sub,curr);
     $('#shipping').textContent=money(ship,curr);
     const discountRow=$('#discountRow'),discountValue=$('#discountValue');

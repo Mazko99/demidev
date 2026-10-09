@@ -47,3 +47,10 @@ body.checkout-page .order-success a{color:#111;text-decoration:underline;}
   body.checkout-page .checkout-account-notice,
   body.checkout-page .checkout-feedback{bottom:max(65px,env(safe-area-inset-bottom))!important;}
 }
+
+/* Small scroll allowance beneath Checkout; keep desktop/mobile layout dimensions intact. */
+body.checkout-page::after{content:"";display:block;position:relative;clear:both;height:88px;pointer-events:none;}
+@media(max-width:900px){body.checkout-page::after{height:80px;}}
+@media(min-width:901px){
+  body.checkout-page{min-height:calc(var(--checkout-stage-height,1080px) + 88px)!important;}
+}

@@ -88,3 +88,26 @@ html,body{scroll-behavior:auto}
 .order-payment-indicator{font-weight:700!important;border:1px solid currentColor;padding:3px 7px;display:inline-flex;align-items:center;gap:5px}
 
 .order-admin-delivery{padding:5px 0 9px;font:400 13px/1.5 Arial,sans-serif;overflow-wrap:anywhere;}
+
+/* Orders controls — scoped to the admin orders tab, preserving all other screens. */
+#ordersEditor{padding-bottom:104px;}
+.orders-global-delivery{border:1px solid #dedede;background:#fafafa;border-radius:12px;padding:15px;margin:16px 0 18px;display:flex;gap:18px;align-items:center;justify-content:space-between;flex-wrap:wrap;}
+.orders-global-delivery label{display:grid;gap:5px;flex:1 1 240px;font-size:14px;}
+.orders-global-delivery small,.order-delivery-heading small{display:block;font-size:12px;line-height:1.5;font-weight:400;color:#555;}
+.orders-global-delivery-controls,.order-delivery-controls{display:flex;gap:9px;align-items:center;flex-wrap:wrap;}
+.orders-global-delivery input,.order-delivery-editor input{width:118px;max-width:100%;min-height:42px;border:1px solid #a7a7a7;border-radius:5px;background:#fff;padding:8px 10px;font:inherit;}
+.orders-global-delivery .primary-btn{height:42px;padding:0 18px;white-space:nowrap;}
+.orders-archive-filter{display:flex;align-items:center;gap:9px;margin:3px 0 15px;font:500 13px Arial,sans-serif;cursor:pointer;flex-wrap:wrap;}
+.orders-archive-filter input{width:18px;height:18px;accent-color:#111;}
+.orders-archive-filter span{color:#777;font-weight:400;}
+.order-delivery-editor{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:end;margin-top:13px;padding:12px 0;border-bottom:1px solid #eee;}
+.order-delivery-heading{display:grid;gap:4px;font-size:13px;}
+.order-delivery-controls .secondary-btn{height:42px;border-radius:4px;white-space:nowrap;}
+.order-admin-actions{display:flex;justify-content:space-between;align-items:end;gap:12px;flex-wrap:wrap;margin-top:14px;}
+.order-admin-actions .order-status-field{flex:1 1 200px;margin:0;}
+.order-delete-btn{height:40px;background:#fff;color:#8b1c1c;border:1px solid #a52f2f;border-radius:5px;padding:0 14px;font-weight:700;cursor:pointer;}
+.order-delete-btn:hover{background:#8b1c1c;color:#fff;}
+.order-restore-btn{height:40px;}
+.order-admin-card.is-archived{background:#f6f6f6;}
+.order-delete-btn:disabled,.order-admin-actions button:disabled{opacity:.55;cursor:wait;}
+@media(max-width:850px){.order-delivery-editor{grid-template-columns:1fr;}.order-delivery-controls{justify-content:flex-start;}.orders-global-delivery{align-items:flex-start;}}
