@@ -1,0 +1,150 @@
+/* DEMI DEVILLE — 09.10.2026
+   Product and Checkout only: a modest amount of vertical scroll, and
+   all multi-image thumbnails directly BELOW the main media.
+   Keep the main image size, header, price, controls, and other pages unchanged. */
+
+/* PRODUCT — let tall garments and an opened description be reachable below
+   the viewport, with a little breathing room after the page content. */
+html body.product-detail-page {
+  height: auto !important;
+  min-height: 100dvh !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+html body.product-detail-page #productPageShell.product-page-shell {
+  height: auto !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+}
+html body.product-detail-page #productPage.product-page {
+  height: auto !important;
+  min-height: 100dvh !important;
+  padding-bottom: max(102px, env(safe-area-inset-bottom)) !important;
+  overflow: visible !important;
+}
+
+/* The gallery is appended to .product-visual only when there are 2+ photos.
+   Override former desktop absolute/right/left positioning. */
+html body.product-detail-page #productPage .product-visual {
+  height: auto !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  overflow: visible !important;
+}
+html body.product-detail-page #productPage .product-visual > .product-customer-gallery {
+  position: relative !important;
+  inset: auto !important;
+  left: auto !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: auto !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 543px !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  margin: 12px auto 0 !important;
+  padding: 0 !important;
+  transform: none !important;
+  display: block !important;
+  overflow: visible !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+html body.product-detail-page #productPage .product-visual > .product-customer-gallery > .product-customer-thumbs {
+  position: relative !important;
+  inset: auto !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 9px !important;
+  padding: 2px 0 8px !important;
+  margin: 0 !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  overscroll-behavior-x: contain !important;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin !important;
+  scrollbar-color: #777 transparent;
+}
+html body.product-detail-page #productPage .product-visual .product-customer-thumb {
+  position: relative !important;
+  inset: auto !important;
+  flex: 0 0 74px !important;
+  width: 74px !important;
+  min-width: 74px !important;
+  height: 74px !important;
+  min-height: 74px !important;
+  max-height: 74px !important;
+  margin: 0 !important;
+  padding: 3px !important;
+  overflow: hidden !important;
+  border: 1px solid #bbb !important;
+  background: #fff !important;
+  box-sizing: border-box !important;
+  cursor: pointer !important;
+}
+html body.product-detail-page #productPage .product-visual .product-customer-thumb.is-active {
+  border: 2px solid #111 !important;
+}
+html body.product-detail-page #productPage .product-visual .product-customer-thumb img,
+html body.product-detail-page #productPage .product-visual .product-customer-thumb video {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: contain !important;
+  pointer-events: none !important;
+}
+
+/* Checkout uses a scaled 1920px desktop stage, so the document must be tall
+   enough to scroll beyond that scaled stage; mobile keeps its normal flow. */
+@media (min-width: 901px) {
+  html body.checkout-page {
+    height: auto !important;
+    min-height: max(calc(var(--checkout-stage-height, 1080px) + 108px), calc(100dvh + 84px)) !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+  }
+  html body.checkout-page::after {
+    height: 108px !important;
+  }
+}
+@media (max-width: 900px) {
+  html body.product-detail-page #productPage.product-page {
+    padding-bottom: max(98px, calc(env(safe-area-inset-bottom) + 72px)) !important;
+  }
+  html body.product-detail-page #productPage .product-visual > .product-customer-gallery {
+    width: min(92vw, 520px) !important;
+    max-width: 100% !important;
+    margin: 10px auto 12px !important;
+  }
+  html body.product-detail-page #productPage .product-visual .product-customer-thumb {
+    flex-basis: 60px !important;
+    width: 60px !important;
+    min-width: 60px !important;
+    height: 60px !important;
+    min-height: 60px !important;
+    max-height: 60px !important;
+  }
+  html body.checkout-page {
+    height: auto !important;
+    min-height: calc(100dvh + 88px) !important;
+    overflow-y: auto !important;
+  }
+  html body.checkout-page::after {
+    height: max(88px, env(safe-area-inset-bottom)) !important;
+  }
+}
