@@ -148,3 +148,42 @@ html body.product-detail-page #productPage .product-visual .product-customer-thu
     height: max(88px, env(safe-area-inset-bottom)) !important;
   }
 }
+
+/* 09.10.2026 — Desktop scrolling repair.
+   The original desktop artboard rules leave the <html> scroll locked and the
+   document only slightly taller than the window.  Let the DOCUMENT scroll;
+   do not add an inner scroller to the product image or the checkout form.
+   Scope this strictly to the two requested pages and desktop viewports. */
+@media (min-width: 901px) {
+  html:has(> body.product-detail-page),
+  html:has(> body.checkout-page) {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+  }
+  html body.product-detail-page {
+    height: auto !important;
+    min-height: calc(100dvh + 180px) !important;
+    overflow-x: hidden !important;
+    overflow-y: visible !important;
+  }
+  html body.product-detail-page #productPageShell.product-page-shell {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+  html body.product-detail-page #productPage.product-page {
+    height: auto !important;
+    min-height: calc(100dvh + 180px) !important;
+    padding-bottom: 262px !important; /* 160px beyond the previous 102px */
+    overflow: visible !important;
+  }
+  html body.checkout-page {
+    height: auto !important;
+    min-height: max(
+      calc(var(--checkout-stage-height, 1080px) + 268px),
+      calc(100dvh + 240px)
+    ) !important;
+    overflow-x: hidden !important;
+    overflow-y: visible !important;
+  }
+}
