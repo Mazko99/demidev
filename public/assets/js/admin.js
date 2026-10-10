@@ -644,6 +644,7 @@ function fillAboutEditor(){
   const set=(id,value)=>{const el=$(id);if(el)el.value=value??''};
   set('#aboutMainMediaDesktop',settings.aboutMainMediaDesktop||'/assets/images/about-copy-psd.png');
   set('#aboutMainMediaMobile',settings.aboutMainMediaMobile||'/assets/images/about-mobile-approved.jpg');
+  for(const [id,key] of [['#aboutMainFullscreenDesktop','aboutMainFullscreenDesktop'],['#aboutMainFullscreenMobile','aboutMainFullscreenMobile'],['#aboutExtraMediaFullscreen','aboutExtraMediaFullscreen']]){const input=$(id);if(input)input.checked=settings[key]===true;}
   const en=$('#aboutExtraHtmlEnEditor'),ru=$('#aboutExtraHtmlRuEditor');
   if(en)en.innerHTML=String(settings.aboutExtraHtmlEn||'').trim()||plainToRich(settings.aboutExtraTextEn||'');
   if(ru)ru.innerHTML=String(settings.aboutExtraHtmlRu||'').trim()||plainToRich(settings.aboutExtraTextRu||'');
@@ -669,7 +670,7 @@ $$('.about-rich-toolbar').forEach(toolbar=>{
 });
 async function saveAboutSettings(){
   const enEditor=$('#aboutExtraHtmlEnEditor'),ruEditor=$('#aboutExtraHtmlRuEditor');
-  const payload={aboutMainMediaDesktop:$('#aboutMainMediaDesktop')?.value.trim()||'/assets/images/about-copy-psd.png',aboutMainMediaMobile:$('#aboutMainMediaMobile')?.value.trim()||'/assets/images/about-mobile-approved.jpg',aboutExtraHtmlEn:enEditor?.innerHTML||'',aboutExtraHtmlRu:ruEditor?.innerHTML||'',aboutExtraTextEn:enEditor?.innerText||'',aboutExtraTextRu:ruEditor?.innerText||'',aboutExtraFont:$('#aboutExtraFont')?.value||'',aboutExtraFontSizeDesktop:clampNumber($('#aboutExtraFontSizeDesktop')?.value,10,80,24),aboutExtraFontSizeMobile:clampNumber($('#aboutExtraFontSizeMobile')?.value,10,48,18),aboutExtraMedia:$('#aboutExtraMedia')?.value.trim()||''};
+  const payload={aboutMainMediaDesktop:$('#aboutMainMediaDesktop')?.value.trim()||'/assets/images/about-copy-psd.png',aboutMainMediaMobile:$('#aboutMainMediaMobile')?.value.trim()||'/assets/images/about-mobile-approved.jpg',aboutExtraHtmlEn:enEditor?.innerHTML||'',aboutExtraHtmlRu:ruEditor?.innerHTML||'',aboutExtraTextEn:enEditor?.innerText||'',aboutExtraTextRu:ruEditor?.innerText||'',aboutExtraFont:$('#aboutExtraFont')?.value||'',aboutExtraFontSizeDesktop:clampNumber($('#aboutExtraFontSizeDesktop')?.value,10,80,24),aboutExtraFontSizeMobile:clampNumber($('#aboutExtraFontSizeMobile')?.value,10,48,18),aboutExtraMedia:$('#aboutExtraMedia')?.value.trim()||'',aboutMainFullscreenDesktop:!!$('#aboutMainFullscreenDesktop')?.checked,aboutMainFullscreenMobile:!!$('#aboutMainFullscreenMobile')?.checked,aboutExtraMediaFullscreen:!!$('#aboutExtraMediaFullscreen')?.checked};
   try{setBusy(true);settings=await api('/api/admin/settings',{method:'PUT',body:JSON.stringify(payload)});fillAboutEditor();showNotice('ABOUT сохранён. Основное изображение остаётся первым, дополнительный контент идёт ниже.')}catch(err){showNotice(err.message,'error')}finally{setBusy(false)}
 }
 $('#saveAboutSettings')?.addEventListener('click',saveAboutSettings);

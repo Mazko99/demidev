@@ -3,6 +3,9 @@
   const site=await SITE;
   const settings=site.settings||{};
   const lang=document.documentElement.lang==='ru'?'ru':'en';
+  document.body.classList.toggle('about-fullscreen-desktop',settings.aboutMainFullscreenDesktop===true);
+  document.body.classList.toggle('about-fullscreen-mobile',settings.aboutMainFullscreenMobile===true);
+  document.body.classList.toggle('about-extra-fullscreen',settings.aboutExtraMediaFullscreen===true);
 
   const DEFAULT_DESKTOP='/assets/images/about-copy-psd.png';
   const DEFAULT_MOBILE='/assets/images/about-mobile-approved.jpg';
@@ -74,17 +77,9 @@
     // content immediately below the *visible rendered artwork* instead of a full
     // extra viewport, so saved text is visible as soon as the user scrolls below
     // the existing ABOUT image. This does not resize or move the approved artwork.
-    const placeExtraBelowMain=()=>{
-      if(window.innerWidth<=900){extra.style.removeProperty('margin-top');return}
-      const candidates=[document.querySelector('.about-copy-art'),document.querySelector('.about-copy-ru')].filter(Boolean);
-      const main=candidates.find(el=>{const cs=getComputedStyle(el),r=el.getBoundingClientRect();return cs.display!=='none'&&cs.visibility!=='hidden'&&r.width>0&&r.height>0});
-      if(!main)return;
-      const r=main.getBoundingClientRect();
-      extra.style.setProperty('margin-top',`${Math.max(0,Math.ceil(r.bottom+24))}px`,'important');
-    };
-    requestAnimationFrame(placeExtraBelowMain);
-    window.addEventListener('resize',placeExtraBelowMain,{passive:true});
-    window.visualViewport?.addEventListener('resize',placeExtraBelowMain,{passive:true});
+    // The ABOUT canvas is now a normal scrollable section. Extra content follows
+    // it in document flow; no viewport-based margin calculation is necessary.
+    extra.style.removeProperty('margin-top');
   }
 
   const fitChrome=()=>{
@@ -94,4 +89,19 @@
     document.body.style.setProperty('--gallery-header-scale-y',String(s));
   };
   fitChrome();window.addEventListener('resize',fitChrome,{passive:true});window.visualViewport?.addEventListener('resize',fitChrome,{passive:true});
+  // Reveal only after the configured artwork has loaded: no flash of the hardcoded old text.
+  const activeSelector=window.matchMedia('(max-width:900px)').matches?'.about-mobile-approved':'.about-copy-art';
+  const activeMedia=document.querySelector(activeSelector);
+  const finish=()=>document.body.classList.add('about-ready');
+  if(!activeMedia){finish();return}
+  if(activeMedia.tagName==='IMG'){
+    if(activeMedia.complete){finish();return}
+    activeMedia.addEventListener('load',finish,{once:true});
+    activeMedia.addEventListener('error',finish,{once:true});
+  }else if(activeMedia.tagName==='VIDEO'){
+    if(activeMedia.readyState>=2){finish();return}
+    activeMedia.addEventListener('loadeddata',finish,{once:true});
+    activeMedia.addEventListener('error',finish,{once:true});
+  }else{finish();return}
+  setTimeout(finish,3500);
 })();
