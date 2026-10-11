@@ -146,3 +146,183 @@ body.about-page.about-extra-fullscreen #aboutExtraContent .about-extra-media vid
   object-fit:cover!important;
   object-position:center!important;
 }
+
+
+/* FIX 2026-10-10: three gallery items per desktop row, using the full available width. */
+@media (min-width:901px) {
+  body.gallery-page #galleryList.gallery-list {
+    width:100%!important;
+    box-sizing:border-box!important;
+  }
+  body.gallery-page #galleryList.gallery-list > .gallery-item {
+    flex:0 0 calc((100% - 50px) / 3)!important;
+    width:calc((100% - 50px) / 3)!important;
+    max-width:calc((100% - 50px) / 3)!important;
+    min-width:0!important;
+    box-sizing:border-box!important;
+  }
+}
+
+/* FIX 2026-10-10: custom ABOUT media must be centered and use its own aspect ratio.
+   The default PSD artwork keeps its original fixed-canvas positioning. */
+@media (min-width:901px) {
+  body.about-page.about-custom-desktop-media:not(.about-fullscreen-desktop) .about-wrap {
+    position:relative!important;
+    inset:auto!important;
+    width:100%!important;
+    height:auto!important;
+    min-height:calc(100dvh + 65px)!important;
+    margin:0!important;
+    padding:0 24px 65px!important;
+    overflow:visible!important;
+    box-sizing:border-box!important;
+  }
+  body.about-page.about-custom-desktop-media:not(.about-fullscreen-desktop) .about-design-canvas {
+    position:relative!important;
+    inset:auto!important;
+    width:100%!important;
+    height:auto!important;
+    min-height:0!important;
+    margin:0 auto!important;
+    padding:0!important;
+    transform:none!important;
+    transform-origin:center center!important;
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:center!important;
+    justify-content:flex-start!important;
+    overflow:visible!important;
+    pointer-events:auto!important;
+    box-sizing:border-box!important;
+  }
+  body.about-page.about-custom-desktop-media:not(.about-fullscreen-desktop) .about-copy-art {
+    position:relative!important;
+    inset:auto!important;
+    left:auto!important;
+    right:auto!important;
+    top:auto!important;
+    bottom:auto!important;
+    display:block!important;
+    width:min(100%, 1520px)!important;
+    max-width:100%!important;
+    height:auto!important;
+    max-height:none!important;
+    margin:0 auto!important;
+    padding:0!important;
+    transform:none!important;
+    object-fit:contain!important;
+    object-position:center center!important;
+    flex:0 1 auto!important;
+    box-sizing:border-box!important;
+  }
+}
+
+@media (max-width:900px) {
+  body.about-page.about-custom-mobile-media:not(.about-fullscreen-mobile) .about-wrap {
+    position:relative!important;
+    inset:auto!important;
+    width:100%!important;
+    height:auto!important;
+    min-height:calc(100dvh + 65px)!important;
+    margin:0!important;
+    padding:10px 8px 96px!important;
+    overflow:visible!important;
+    box-sizing:border-box!important;
+  }
+  body.about-page.about-custom-mobile-media:not(.about-fullscreen-mobile) .about-design-canvas {
+    position:relative!important;
+    inset:auto!important;
+    width:100%!important;
+    height:auto!important;
+    min-height:0!important;
+    margin:0 auto!important;
+    padding:0!important;
+    transform:none!important;
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:center!important;
+    justify-content:flex-start!important;
+    overflow:visible!important;
+    pointer-events:auto!important;
+    box-sizing:border-box!important;
+  }
+  body.about-page.about-custom-mobile-media:not(.about-fullscreen-mobile) .about-mobile-approved {
+    position:relative!important;
+    inset:auto!important;
+    display:block!important;
+    width:100%!important;
+    max-width:100%!important;
+    height:auto!important;
+    max-height:none!important;
+    margin:0 auto!important;
+    padding:0!important;
+    transform:none!important;
+    object-fit:contain!important;
+    object-position:center center!important;
+    flex:0 1 auto!important;
+    box-sizing:border-box!important;
+  }
+}
+
+/* Uploaded additional ABOUT image/video: keep it centered; do not offset it by a viewport margin. */
+body.about-page #aboutExtraContent {
+  position:relative!important;
+  width:100%!important;
+  max-width:100%!important;
+  margin:0 auto!important;
+  padding-left:0!important;
+  padding-right:0!important;
+  box-sizing:border-box!important;
+  overflow:visible!important;
+}
+body.about-page #aboutExtraContent .about-extra-media {
+  position:relative!important;
+  inset:auto!important;
+  display:block!important;
+  width:min(100%, 1400px)!important;
+  max-width:100%!important;
+  height:auto!important;
+  margin:28px auto!important;
+  padding:0!important;
+  transform:none!important;
+  overflow:visible!important;
+  box-sizing:border-box!important;
+}
+body.about-page #aboutExtraContent .about-extra-media img,
+body.about-page #aboutExtraContent .about-extra-media video {
+  position:relative!important;
+  inset:auto!important;
+  display:block!important;
+  width:auto!important;
+  max-width:100%!important;
+  height:auto!important;
+  max-height:none!important;
+  margin:0 auto!important;
+  padding:0!important;
+  transform:none!important;
+  object-fit:contain!important;
+  object-position:center center!important;
+  background-image:none!important;
+  box-sizing:border-box!important;
+}
+body.about-page.about-extra-fullscreen #aboutExtraContent .about-extra-media {
+  position:relative!important;
+  left:auto!important;
+  right:auto!important;
+  width:100%!important;
+  max-width:100%!important;
+  height:100dvh!important;
+  margin:24px auto!important;
+  overflow:hidden!important;
+}
+body.about-page.about-extra-fullscreen #aboutExtraContent .about-extra-media img,
+body.about-page.about-extra-fullscreen #aboutExtraContent .about-extra-media video {
+  display:block!important;
+  width:100%!important;
+  max-width:100%!important;
+  height:100dvh!important;
+  max-height:none!important;
+  margin:0 auto!important;
+  object-fit:cover!important;
+  object-position:center center!important;
+}

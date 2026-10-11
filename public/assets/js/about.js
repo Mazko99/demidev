@@ -11,6 +11,10 @@
   const DEFAULT_MOBILE='/assets/images/about-mobile-approved.jpg';
   const desktopMain=String(settings.aboutMainMediaDesktop||DEFAULT_DESKTOP).trim()||DEFAULT_DESKTOP;
   const mobileMain=String(settings.aboutMainMediaMobile||DEFAULT_MOBILE).trim()||DEFAULT_MOBILE;
+  // Uploaded media should use a centered, intrinsic-ratio layout instead of the
+  // original PSD's fixed left/top coordinates. Keep the approved default artwork intact.
+  document.body.classList.toggle('about-custom-desktop-media',desktopMain!==DEFAULT_DESKTOP);
+  document.body.classList.toggle('about-custom-mobile-media',mobileMain!==DEFAULT_MOBILE);
 
   function replaceMainMedia(selector,url,alt){
     const current=document.querySelector(selector);if(!current||!url)return;
