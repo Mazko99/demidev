@@ -113,6 +113,25 @@ async function api(url,opt={}){
 function clampPercent(value,fallback=35){const n=Number(value);return Number.isFinite(n)?Math.max(0,Math.min(100,Math.round(n))):fallback}
 function clampNumber(value,min,max,fallback=0){const n=Number(value);return Number.isFinite(n)?Math.max(min,Math.min(max,n)):fallback}
 function cssImage(url){return url?`url(${JSON.stringify(String(url))})`:'none'}
+function applyAdminBrandFont(url){
+  if(!/^\/uploads\/[a-zA-Z0-9._-]+\.(ttf|otf|woff2?)$/i.test(String(url||'')))return;
+  const format=url.toLowerCase().endsWith('.woff2')?'woff2':url.toLowerCase().endsWith('.woff')?'woff':url.toLowerCase().endsWith('.otf')?'opentype':'truetype';
+  let style=document.getElementById('dd-admin-brand-font');
+  if(!style){style=document.createElement('style');style.id='dd-admin-brand-font';document.head.appendChild(style)}
+  style.textContent=`@font-face{font-family:"DD Uploaded Brand";src:url(${JSON.stringify(url)}) format("${format}");font-style:normal;font-weight:600;font-display:swap}`;
+  document.documentElement.style.setProperty('--dd-text-brand-font','"DD Uploaded Brand","DD Benzin Semibold","Arial Black",Arial,sans-serif');
+}
+$('#brandFontFile')?.addEventListener('change',async e=>{
+  const file=e.target.files?.[0];if(!file)return;
+  try{
+    e.target.disabled=true;
+    const dataUrl=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(file)});
+    const uploaded=await api('/api/admin/upload-brand-font',{method:'POST',body:JSON.stringify({filename:file.name,dataUrl})});
+    $('#brandFontUrl').value=uploaded.url;applyAdminBrandFont(uploaded.url);
+    showNotice('Шрифт загружен. Нажмите «Сохранить изменения», чтобы применить его на сайте.');
+  }catch(err){showNotice(err.message,'error')}finally{e.target.disabled=false;e.target.value=''}
+});
+
 function setBusy(busy){$$('.primary-btn').forEach(b=>{if(b.id==='saveTop'||b.type==='submit')b.disabled=busy})}
 function showLogin(message=''){const admin=$('#adminView'),login=$('#loginView');if(admin)admin.hidden=true;if(login){login.hidden=false;login.style.display='grid'}window.scrollTo(0,0);if(message)showNotice(message,'error','#loginNotice')}
 function populateFonts(){
@@ -160,6 +179,7 @@ function fillForm(){
   const desktopOverlay=clampPercent(settings.homeDesktopOverlayOpacity,clampPercent(settings.homeOverlayOpacity,35));
   const mobileOverlay=clampPercent(settings.homeMobileOverlayOpacity,clampPercent(settings.homeOverlayOpacity,35));
   $('#heroDesktop').value=settings.heroDesktop||'/assets/images/hero.jpg';$('#heroMobile').value=settings.heroMobile||'/assets/images/hero-mobile.jpg';
+  $('#brandFontUrl').value=settings.brandFontUrl||'';applyAdminBrandFont(settings.brandFontUrl||'');
   $('#homeDesktopOverlayOpacity').value=desktopOverlay;$('#desktopOverlayRange').value=desktopOverlay;$('#homeMobileOverlayOpacity').value=mobileOverlay;$('#mobileOverlayRange').value=mobileOverlay;
   selectValue($('#homeDesktopFont'),settings.homeDesktopFont||'');selectValue($('#homeMobileFont'),settings.homeMobileFont||'');
   selectValue($('#menuDesktopFont'),settings.menuDesktopFont||'');selectValue($('#menuMobileFont'),settings.menuMobileFont||'');
@@ -246,6 +266,7 @@ function payload(){
   const color=$('#menuUnderlineColorText').value.trim();
   return {
     heroDesktop:$('#heroDesktop').value.trim()||'/assets/images/hero.jpg',heroMobile:$('#heroMobile').value.trim()||'/assets/images/hero-mobile.jpg',
+    brandFontUrl:$('#brandFontUrl').value.trim(),
     homeDesktopOverlayOpacity:desktop,homeMobileOverlayOpacity:mobile,homeDesktopFont:$('#homeDesktopFont').value,homeMobileFont:$('#homeMobileFont').value,homeOverlayOpacity:mobile,
     menuDesktopFont:$('#menuDesktopFont').value,menuMobileFont:$('#menuMobileFont').value,menuDesktopFontSize:menuDesktopSize,menuMobileFontSize:menuMobileSize,
     menuDesktopFontWeight:$('#menuDesktopFontWeight').value?Number($('#menuDesktopFontWeight').value):0,menuMobileFontWeight:$('#menuMobileFontWeight').value?Number($('#menuMobileFontWeight').value):0,
@@ -466,6 +487,8 @@ function openProductModal(productId){
   $('#productOriginalId').value=p?.id||'';$('#productId').value=p?.id||'';$('#productId').readOnly=!!p;
   $('#productNameEn').value=p?.name||'';$('#productNameRu').value=p?.nameRu||'';$('#productPriceAdmin').value=Number(p?.price)||0;$('#productPriceMode').value=p?.priceMode||'number';$('#productPriceTextEn').value=p?.priceText||'';$('#productPriceTextRu').value=p?.priceTextRu||'';$('#productPurchasable').checked=p?.purchasable!==false;
   $('#productFabricEn').value=p?.fabric||'';$('#productFabricRu').value=p?.fabricRu||'';$('#productDescriptionEn').value=p?.description||'';$('#productDescriptionRu').value=p?.descriptionRu||'';
+  $('#productSizeInfoEn').value=p?.sizeInfo||'';$('#productSizeInfoRu').value=p?.sizeInfoRu||'';
+  $('#productDeliveryInfoEn').value=p?.deliveryInfo||'';$('#productDeliveryInfoRu').value=p?.deliveryInfoRu||'';
   $('#productSort').value=Number(p?.sort)||((productsDraft.length+1)*10);$('#productActive').checked=p?.active!==false;
   productImagesDraft=productImagesOf(p||{});productSizesDraft=productSizesOf(p||{});if(!productSizesDraft.length)productSizesDraft=[{size:'XS',stock:0},{size:'S',stock:0},{size:'M',stock:0},{size:'L',stock:0},{size:'XL',stock:0}];
   const cats=productCategoriesOf(p||{});$('#productCategoryChecks').dataset.selected=cats.join('|');renderProductCategoryChecks();renderProductImages();renderProductSizes();
@@ -493,7 +516,7 @@ function productPayloadFromForm(){
   const name=$('#productNameEn').value.trim();let pid=original||slugify($('#productId').value||name)||uid('product');
   const variants=productSizesDraft.map(v=>({size:String(v.size||'').trim(),stock:v.stock===null||v.stock===undefined||v.stock===''?null:Math.max(0,Math.floor(Number(v.stock)||0))})).filter(v=>v.size);
   const sizes=variants.filter(v=>v.stock===null||v.stock>0).map(v=>v.size);
-  return {id:pid,name,nameRu:$('#productNameRu').value.trim(),price:Math.max(0,Number($('#productPriceAdmin').value)||0),priceMode:$('#productPriceMode').value||'number',priceText:$('#productPriceTextEn').value.trim(),priceTextRu:$('#productPriceTextRu').value.trim(),purchasable:$('#productPurchasable').checked,description:$('#productDescriptionEn').value.trim(),descriptionRu:$('#productDescriptionRu').value.trim(),fabric:$('#productFabricEn').value.trim(),fabricRu:$('#productFabricRu').value.trim(),image:productImagesDraft[0]||'',images:clone(productImagesDraft),categories:selectedProductCategories(),variants,sizes,active:$('#productActive').checked,sort:Math.max(0,Math.floor(Number($('#productSort').value)||0))};
+  return {id:pid,name,nameRu:$('#productNameRu').value.trim(),price:Math.max(0,Number($('#productPriceAdmin').value)||0),priceMode:$('#productPriceMode').value||'number',priceText:$('#productPriceTextEn').value.trim(),priceTextRu:$('#productPriceTextRu').value.trim(),purchasable:$('#productPurchasable').checked,description:$('#productDescriptionEn').value.replace(/\r\n?/g,'\n'),descriptionRu:$('#productDescriptionRu').value.replace(/\r\n?/g,'\n'),fabric:$('#productFabricEn').value.replace(/\r\n?/g,'\n'),fabricRu:$('#productFabricRu').value.replace(/\r\n?/g,'\n'),sizeInfo:$('#productSizeInfoEn').value.replace(/\r\n?/g,'\n'),sizeInfoRu:$('#productSizeInfoRu').value.replace(/\r\n?/g,'\n'),deliveryInfo:$('#productDeliveryInfoEn').value.replace(/\r\n?/g,'\n'),deliveryInfoRu:$('#productDeliveryInfoRu').value.replace(/\r\n?/g,'\n'),image:productImagesDraft[0]||'',images:clone(productImagesDraft),categories:selectedProductCategories(),variants,sizes,active:$('#productActive').checked,sort:Math.max(0,Math.floor(Number($('#productSort').value)||0))};
 }
 $('#productEditorForm')?.addEventListener('submit',async e=>{
   e.preventDefault();const data=productPayloadFromForm();if(!data.name)return showNotice('Введите название товара на английском.','error');if(!data.image)return showNotice('Добавьте хотя бы одно изображение товара.','error');

@@ -76,7 +76,7 @@
             <div class="preview desktop-preview" id="desktopPreview">
               <div class="preview-overlay" id="desktopPreviewOverlay"></div>
               <div class="preview-ui">
-                <div class="preview-logo preview-logo-art" aria-label="DEMI DEVILLE"></div>
+                <div class="preview-logo preview-logo-art" aria-label="DEMI DEVILLE">DEMI DEVILLE</div>
                 <div class="preview-menu"><span>SHOP</span><span>LOGIN</span></div>
                 <div class="preview-support">SUPPORT</div>
               </div>
@@ -113,6 +113,14 @@
               </div>
             </div>
           </div>
+        </section>
+
+        <section class="device-card" id="brandFontCard">
+          <div class="device-card-head"><div><span class="device-badge">ЛОГОТИП</span><h2>Шрифт текстового логотипа DEMI DEVILLE</h2></div></div>
+          <p class="admin-help-text">Логотип на главной и во всех шапках отображается текстом. Загрузите ваш Benzin Semibold (TTF, OTF, WOFF или WOFF2) один раз — посетители увидят тот же шрифт без потери качества при увеличении.</p>
+          <label class="field"><span>Адрес загруженного шрифта</span><input id="brandFontUrl" type="text" readonly placeholder="Шрифт ещё не загружен"></label>
+          <label class="upload-btn"><input id="brandFontFile" type="file" accept=".ttf,.otf,.woff,.woff2,font/*"><span>Загрузить шрифт логотипа</span></label>
+          <p class="admin-help-text">После загрузки нажмите «Сохранить изменения». На опубликованном сайте шрифт хранится в PostgreSQL и не пропадает при обновлении проекта.</p>
         </section>
 
         <section class="device-card" data-device="mobile">
@@ -524,10 +532,17 @@
               <label class="check-control"><input id="productPurchasable" type="checkbox" checked> Разрешить покупку онлайн</label>
               <label class="field"><span>Название EN</span><input id="productNameEn" type="text" required></label>
               <label class="field"><span>Название RU</span><input id="productNameRu" type="text"></label>
-              <label class="field"><span>Материал / состав EN</span><input id="productFabricEn" type="text"></label>
-              <label class="field"><span>Материал / состав RU</span><input id="productFabricRu" type="text"></label>
-              <label class="field span-2"><span>Описание EN</span><textarea id="productDescriptionEn" rows="4"></textarea></label>
-              <label class="field span-2"><span>Описание RU</span><textarea id="productDescriptionRu" rows="4"></textarea></label>
+              <label class="field"><span>FABRIC / Материал EN</span><textarea id="productFabricEn" rows="3" placeholder="Material, care instructions..."></textarea></label>
+              <label class="field"><span>FABRIC / Материал RU</span><textarea id="productFabricRu" rows="3" placeholder="Материал, уход..."></textarea></label>
+              <label class="field span-2"><span>DESCRIPTION / Описание EN</span><textarea id="productDescriptionEn" rows="4" placeholder="Product description"></textarea></label>
+              <label class="field span-2"><span>DESCRIPTION / Описание RU</span><textarea id="productDescriptionRu" rows="4" placeholder="Описание товара"></textarea></label>
+              <div class="product-copy-divider span-2"><strong>SIZE — текст о размере и посадке</strong><small>Это описание под раскрывающимся пунктом SIZE, а не список размеров для выбора.</small></div>
+              <label class="field span-2"><span>SIZE — English</span><textarea id="productSizeInfoEn" rows="4" placeholder="Fit, measurements, size guide..."></textarea></label>
+              <label class="field span-2"><span>SIZE — Русский</span><textarea id="productSizeInfoRu" rows="4" placeholder="Посадка, замеры, размерная сетка..."></textarea></label>
+              <div class="product-copy-divider span-2"><strong>DELIVERY AND EXCHANGES / REFUND</strong><small>Информация о доставке, обмене и возврате для этого товара.</small></div>
+              <label class="field span-2"><span>DELIVERY / REFUND — English</span><textarea id="productDeliveryInfoEn" rows="5" placeholder="Shipping, exchanges and refunds..."></textarea></label>
+              <label class="field span-2"><span>DELIVERY / REFUND — Русский</span><textarea id="productDeliveryInfoRu" rows="5" placeholder="Доставка, обмен и возврат..."></textarea></label>
+              <p class="product-copy-help span-2">Переносы строк и пустые строки сохраняются: новый абзац в редакторе будет новым абзацем на странице товара. Тексты редактируются отдельно для каждого товара.</p>
               <label class="field"><span>Порядок сортировки</span><input id="productSort" type="number" min="0" step="1" value="0"></label>
               <label class="check-control product-visible-check"><input id="productActive" type="checkbox" checked> Показывать товар на сайте</label>
             </div>
@@ -565,6 +580,6 @@
     </section>
   </div>
 
-  <script src="/assets/js/admin.js?v=20261009-orders-v1"></script>
+  <script src="/assets/js/admin.js?v=20261011-product-copy-v1"></script>
 </body>
 </html>

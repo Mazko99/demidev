@@ -36,8 +36,13 @@
   const priceLabel=window.ddProductPriceLabel?window.ddProductPriceLabel(p,curr,lang):money(p.price,curr);
   $('#productPrice').innerHTML=priceLabel?`<span class="product-price-shape">${esc(priceLabel)}</span>`:'';
   $('#productPrice').hidden=!priceLabel;
+  // Product CMS copy is plain text. TextContent keeps user input safe; CSS
+  // white-space:pre-wrap preserves line breaks and blank paragraphs.
   $('#fabricText').textContent=text('fabric')||'—';
   $('#detailsText').textContent=text('description')||'—';
+  const sizeCopy=text('sizeInfo'),deliveryCopy=text('deliveryInfo');
+  $('#sizeInfoText').textContent=sizeCopy.trim()?sizeCopy:(lang==='ru'?'Выберите размер выше.':'Select your size above.');
+  $('#deliveryText').textContent=deliveryCopy.trim()?deliveryCopy:(lang==='ru'?'По вопросам доставки, обмена и возврата свяжитесь с нашей службой поддержки.':'For delivery, exchanges and refunds, please contact our support team.');
 
   let gallery=null;
   if(images.length>1){

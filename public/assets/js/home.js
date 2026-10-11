@@ -1,6 +1,7 @@
 (async()=>{
   const site=await SITE;
   const s=site.settings||{};
+  window.ddApplyBrandFont?.(s);
   const currentUser=window.ddCurrentUser?await window.ddCurrentUser():null;
   const menuConfig=window.ddGetMenuConfig?window.ddGetMenuConfig(s):{groups:[],mobileLinks:[]};
   if(currentUser){const loginGroup=(menuConfig.groups||[]).find(g=>g.id==='login');if(loginGroup){loginGroup.labelEn='ACCOUNT';loginGroup.labelRu='АККАУНТ';loginGroup.href='/account.html';loginGroup.items=(loginGroup.items||[]).map(item=>item.id==='register'?{...item,enabled:false}:item.id==='account'?{...item,href:'/account.html',showMobile:false}:item)}}
@@ -29,9 +30,8 @@
 
   const brand=s.heroTitle||s.brand||'DEMI DEVILLE';
   if(title){
-    // The desktop brand is always the approved PNG artwork. Keeping the element empty
-    // prevents a text flash before JavaScript finishes loading.
-    title.textContent='';title.classList.add('reference-brand','home-brand-interactive');title.tabIndex=0;title.setAttribute('role','button');title.setAttribute('aria-label',brand);
+    // Real selectable text, not a bitmap; preserve existing click/reload action.
+    title.textContent=brand;title.classList.add('reference-brand','home-brand-interactive');title.tabIndex=0;title.setAttribute('role','button');title.setAttribute('aria-label',brand);
     let reloadTimer=0;
     const shimmerAndReload=()=>{clearTimeout(reloadTimer);title.classList.remove('brand-flash');void title.offsetWidth;title.classList.add('brand-flash');reloadTimer=setTimeout(()=>location.reload(),300)};
     title.addEventListener('click',shimmerAndReload);

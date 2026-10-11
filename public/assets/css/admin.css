@@ -111,3 +111,8 @@ html,body{scroll-behavior:auto}
 .order-admin-card.is-archived{background:#f6f6f6;}
 .order-delete-btn:disabled,.order-admin-actions button:disabled{opacity:.55;cursor:wait;}
 @media(max-width:850px){.order-delivery-editor{grid-template-columns:1fr;}.order-delivery-controls{justify-content:flex-start;}.orders-global-delivery{align-items:flex-start;}}
+
+/* 2026-10-11 — per-product multiline SIZE and DELIVERY CMS fields. */
+.product-copy-divider{margin:14px 0 3px;padding:12px 0 6px;border-top:1px solid #e1e4e7;display:flex;flex-direction:column;gap:5px}
+.product-copy-divider strong{font-size:14px}.product-copy-divider small,.product-copy-help{font-size:12px;line-height:1.5;color:#68707b}
+.product-copy-help{margin:3px 0 0}.product-editor-form textarea{resize:vertical;white-space:pre-wrap;line-height:1.5;min-height:90px}

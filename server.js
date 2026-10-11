@@ -574,6 +574,27 @@ async function handleApi(req,res,u){
     try{await persistUploadedMedia(name,mime,buffer)}catch(err){console.error('Persistent upload failed:',err);return sendJson(res,500,{error:'Could not save media permanently. Please try again.'})}
     return sendJson(res,200,{url:`/uploads/${name}`,persistent:!!(USE_POSTGRES&&PG_POOL)});
   }
+  // Dedicated admin-only font upload. No fonts are shipped in the project ZIP;
+  // the owner can install their licensed Benzin font from the CMS instead.
+  if(m==='POST'&&p==='/api/admin/upload-brand-font'){
+    const a=needUser(req,res,true);if(!a)return;
+    if(REQUIRE_PERSISTENT_MEDIA&&(!USE_POSTGRES||!PG_POOL))return sendJson(res,503,{error:'Connect PostgreSQL to store the font permanently.'});
+    const b=await readJson(req,3*1024*1024);
+    const ext=path.extname(String(b.filename||'')).toLowerCase();
+    if(!['.ttf','.otf','.woff','.woff2'].includes(ext))return sendJson(res,400,{error:'Upload a TTF, OTF, WOFF or WOFF2 font.'});
+    const match=String(b.dataUrl||'').match(/^data:([a-zA-Z0-9.+-]+\/[a-zA-Z0-9.+-]+);base64,([A-Za-z0-9+/=]+)$/);
+    if(!match)return sendJson(res,400,{error:'Invalid font data.'});
+    const bytes=Buffer.from(match[2],'base64');
+    if(bytes.length<100||bytes.length>2*1024*1024)return sendJson(res,400,{error:'Font file must be smaller than 2 MB.'});
+    const magic=bytes.subarray(0,4).toString('ascii');
+    const isTrueType=bytes.readUInt32BE(0)===0x00010000||magic==='true'||magic==='typ1';
+    if(!((ext==='.ttf'&&isTrueType)||(ext==='.otf'&&magic==='OTTO')||(ext==='.woff'&&magic==='wOFF')||(ext==='.woff2'&&magic==='wOF2')))
+      return sendJson(res,400,{error:'File content does not match the selected font format.'});
+    const mime=({'.ttf':'font/ttf','.otf':'font/otf','.woff':'font/woff','.woff2':'font/woff2'})[ext];
+    const name=`${Date.now()}-${crypto.randomBytes(6).toString('hex')}-brand${ext}`;
+    try{await persistUploadedMedia(name,mime,bytes)}catch(err){console.error('Brand font upload failed:',err);return sendJson(res,500,{error:'Could not save the font.'})}
+    return sendJson(res,200,{url:`/uploads/${name}`,persistent:!!(USE_POSTGRES&&PG_POOL)});
+  }
   if(m==='POST'&&p==='/api/admin/change-password'){const a=needUser(req,res,true);if(!a)return;const b=await readJson(req);if(String(b.newPassword||'').length<8)return sendJson(res,400,{error:'New password must be at least 8 characters.'});if(!verifyPassword(String(b.currentPassword||''),a.user.passwordHash))return sendJson(res,400,{error:'Current password is wrong.'});a.user.passwordHash=hashPassword(b.newPassword);await saveDb(a.db);return sendJson(res,200,{ok:true});}
   const crud=p.match(/^\/api\/admin\/(products|gallery|sections)(?:\/([^/]+))?$/);
   if(crud){

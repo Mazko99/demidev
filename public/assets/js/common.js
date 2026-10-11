@@ -1,4 +1,16 @@
 const SITE = fetch('/api/site').then(r=>r.json()).catch(()=>({settings:{},products:[],gallery:[],sections:[]}));
+// A font uploaded by the owner lives in persistent media storage, not the ZIP.
+function ddApplyBrandFont(settings={}){
+  const url=String(settings.brandFontUrl||'').trim();
+  if(!/^\/uploads\/[a-zA-Z0-9._-]+\.(ttf|otf|woff2?)$/i.test(url))return;
+  const format=url.toLowerCase().endsWith('.woff2')?'woff2':url.toLowerCase().endsWith('.woff')?'woff':url.toLowerCase().endsWith('.otf')?'opentype':'truetype';
+  let style=document.getElementById('dd-uploaded-brand-font');
+  if(!style){style=document.createElement('style');style.id='dd-uploaded-brand-font';document.head.appendChild(style)}
+  style.textContent=`@font-face{font-family:"DD Uploaded Brand";src:url(${JSON.stringify(url)}) format("${format}");font-style:normal;font-weight:600;font-display:swap}`;
+  document.documentElement.style.setProperty('--dd-text-brand-font','"DD Uploaded Brand","DD Benzin Semibold","Benzin Semibold","Arial Black",Arial,sans-serif');
+}
+window.ddApplyBrandFont=ddApplyBrandFont;
+
 const $ = (s,root=document)=>root.querySelector(s);
 const $$ = (s,root=document)=>[...root.querySelectorAll(s)];
 const esc = v => String(v??'').replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':'&quot;'}[c]));
@@ -105,6 +117,7 @@ function ddApplyPageBackground(settings={}){
 window.ddPageBackgroundKey=ddPageBackgroundKey;window.ddResolvedPageBackground=ddResolvedPageBackground;window.ddApplyPageBackground=ddApplyPageBackground;
 SITE.then(site=>{
   const settings=site?.settings||{};
+  ddApplyBrandFont(settings);
   const backgrounds=settings.pageBackgrounds&&typeof settings.pageBackgrounds==='object'?settings.pageBackgrounds:{};
   const key=ddPageBackgroundKey();
   if(key==='home'){
