@@ -30,8 +30,8 @@
 
   const brand=s.heroTitle||s.brand||'DEMI DEVILLE';
   if(title){
-    // Real selectable text, not a bitmap; preserve existing click/reload action.
-    title.textContent=brand;title.classList.add('reference-brand','home-brand-interactive');title.tabIndex=0;title.setAttribute('role','button');title.setAttribute('aria-label',brand);
+    // Keep the original clickable PNG wordmark; hide live text to avoid flashing.
+    title.textContent='';title.classList.add('reference-brand','home-brand-interactive');title.tabIndex=0;title.setAttribute('role','button');title.setAttribute('aria-label',brand);
     let reloadTimer=0;
     const shimmerAndReload=()=>{clearTimeout(reloadTimer);title.classList.remove('brand-flash');void title.offsetWidth;title.classList.add('brand-flash');reloadTimer=setTimeout(()=>location.reload(),300)};
     title.addEventListener('click',shimmerAndReload);

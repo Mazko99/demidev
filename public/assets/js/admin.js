@@ -128,7 +128,7 @@ $('#brandFontFile')?.addEventListener('change',async e=>{
     const dataUrl=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(file)});
     const uploaded=await api('/api/admin/upload-brand-font',{method:'POST',body:JSON.stringify({filename:file.name,dataUrl})});
     $('#brandFontUrl').value=uploaded.url;applyAdminBrandFont(uploaded.url);
-    showNotice('Шрифт загружен. Нажмите «Сохранить изменения», чтобы применить его на сайте.');
+    showNotice('Шрифт загружен. Нажмите «Сохранить изменения» для сохранения настройки; PNG-логотип останется без изменений.');
   }catch(err){showNotice(err.message,'error')}finally{e.target.disabled=false;e.target.value=''}
 });
 

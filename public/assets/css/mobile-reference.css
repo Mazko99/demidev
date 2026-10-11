@@ -9,7 +9,7 @@
 /* The supplied logo is the single brand image on every screen. */
 @media (min-width:901px){
   .home .home-title.reference-brand{
-    height:47px!important;background:url("/assets/images/shop-brand.png") center/540px auto no-repeat!important;
+    height:47px!important;background:url("/assets/images/shop-brand-hd-20261011.png") center/540px auto no-repeat!important;
     filter:invert(1)!important;
   }
 }
@@ -36,7 +36,7 @@
     display:block!important;position:absolute!important;left:50%!important;top:19px!important;
     width:50vw!important;max-width:270px!important;height:4.4vw!important;max-height:24px!important;
     margin:0!important;padding:0!important;transform:translateX(-50%)!important;
-    background:url("/assets/images/shop-brand.png") center/100% auto no-repeat!important;
+    background:url("/assets/images/shop-brand-hd-20261011.png") center/100% auto no-repeat!important;
     color:transparent!important;font-size:0!important;line-height:0!important;
     text-shadow:none!important;white-space:nowrap!important;
   }

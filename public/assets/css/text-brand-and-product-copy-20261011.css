@@ -1,84 +1,8 @@
-/* DEMI DEVILLE — actual text wordmarks and CMS paragraph formatting.
-   The customer-supplied Benzin Semibold font is NOT redistributed.
-   Place your licensed copy at /public/assets/fonts/benzin-semibold.ttf.
-   A locally installed font with the same name is also supported. */
-@font-face{
-  font-family:"DD Benzin Semibold";
-  src:local("Benzin Semibold"),local("Benzin-Semibold"),
-      url("/assets/fonts/benzin-semibold.ttf") format("truetype");
-  font-weight:600;font-style:normal;font-display:swap;
-}
-:root{--dd-text-brand-font:"DD Benzin Semibold","Benzin Semibold","Benzin-Semibold","Arial Black",Arial,sans-serif;}
-
-/* Main-page logo — the original 540 × 52 artwork slot, now crisp DOM text. */
-@media (min-width:901px){
-  html body .home #heroTitle.home-title.reference-brand{
-    display:flex!important;align-items:center!important;justify-content:center!important;
-    width:540px!important;height:52px!important;max-width:none!important;
-    margin:0 0 35px!important;padding:0!important;
-    background:none!important;background-image:none!important;filter:none!important;
-    color:#fff!important;font-family:var(--dd-text-brand-font)!important;
-    font-size:59px!important;font-weight:600!important;font-style:normal!important;
-    line-height:1!important;letter-spacing:0!important;
-    text-indent:0!important;text-shadow:none!important;text-align:center!important;
-    white-space:nowrap!important;overflow:visible!important;
-    font-synthesis:none!important;-webkit-font-smoothing:antialiased;
-    text-rendering:geometricPrecision!important;cursor:pointer!important;
-  }
-}
-
-/* Shared desktop headers. Keep their existing position/size/responsive scale. */
-@media (min-width:901px){
-  html body.shared-chrome-page > #desktopHeader.site-header a.brand{
-    display:flex!important;align-items:center!important;justify-content:center!important;
-    padding:0!important;background:none!important;background-image:none!important;
-    color:#050505!important;font-family:var(--dd-text-brand-font)!important;
-    font-weight:600!important;font-style:normal!important;
-    font-size:clamp(24px,1.875vw,36px)!important;
-    line-height:1!important;letter-spacing:0!important;
-    text-indent:0!important;text-align:center!important;
-    white-space:nowrap!important;overflow:visible!important;
-    filter:none!important;text-shadow:none!important;font-synthesis:none!important;
-    -webkit-font-smoothing:antialiased;text-rendering:geometricPrecision!important;
-  }
-  /* SHOP header is a 1920px canvas scaled as a whole. */
-  html body.shop-page.shared-chrome-page > #desktopHeader.site-header a.brand{
-    font-size:36px!important;
-  }
-}
-
-/* Mobile header and home logo retain the existing centered 50vw / 216px slot. */
-@media (max-width:900px){
-  html body.shared-chrome-page #mobileHeader.mobile-header a.brand,
-  html body .home #mobileBrand.home-mobile-brand{
-    display:flex!important;align-items:center!important;justify-content:center!important;
-    padding:0!important;background:none!important;background-image:none!important;
-    color:#050505!important;font-family:var(--dd-text-brand-font)!important;
-    font-weight:600!important;font-style:normal!important;
-    font-size:min(5.58vw,24px)!important;line-height:1!important;
-    letter-spacing:0!important;text-indent:0!important;text-shadow:none!important;
-    text-align:center!important;white-space:nowrap!important;overflow:visible!important;
-    filter:none!important;font-synthesis:none!important;-webkit-font-smoothing:antialiased;
-    text-rendering:geometricPrecision!important;
-  }
-  html body .home #mobileBrand.home-mobile-brand{color:#fff!important;}
-}
-
-/* Every accordion value is plain text; preserve admin-entered line breaks,
-   including blank lines between paragraphs, without allowing HTML injection. */
+/* DEMI DEVILLE — PNG logo restored; keep multiline product text from admin. */
+/* DESCRIPTION, FABRIC, SIZE, and DELIVERY values preserve line breaks and
+   blank paragraphs entered in the product editor. */
 html body.product-detail-page #productPage .product-info .acc-content{
   white-space:pre-wrap!important;
   overflow-wrap:anywhere!important;
   word-break:normal!important;
 }
-
-/* Admin preview is also a real wordmark, not the old bitmap. */
-html body .preview-logo.preview-logo-art{
-  display:flex!important;align-items:center!important;justify-content:center!important;
-  min-width:260px;height:34px;
-  background:none!important;background-image:none!important;filter:none!important;
-  color:#fff!important;font:600 31px/1 var(--dd-text-brand-font)!important;
-  letter-spacing:0!important;text-indent:0!important;white-space:nowrap!important;
-  font-synthesis:none!important;
-}
-@media(max-width:900px){html body .preview-logo.preview-logo-art{min-width:190px;font-size:22px!important;}}
