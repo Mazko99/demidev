@@ -33,7 +33,7 @@
   body.shared-chrome-page>#desktopHeader .brand{
     position:absolute!important;z-index:607!important;left:50%!important;top:29px!important;
     width:326px!important;height:28px!important;margin:0!important;padding:0!important;
-    transform:translateX(-50%)!important;background:url("/assets/images/shop-brand-hd-20261011.png") center/326px 28px no-repeat!important;
+    transform:translateX(-50%)!important;background:url("/assets/images/shop-brand-sharp-20261011.png") center/326px 28px no-repeat!important;
     color:transparent!important;font-size:0!important;line-height:0!important;
   }
   body.shared-chrome-page>#desktopHeader .global-cart-icon{

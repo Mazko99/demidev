@@ -60,7 +60,7 @@ html,body{scroll-behavior:auto}
 
 /* v21 requested-only admin additions: brand PNG, page backgrounds, rich ABOUT and Mail inbox. */
 .preview-logo-art{
-  min-width:260px;height:34px;background:url('/assets/images/shop-brand-hd-20261011.png') center/contain no-repeat!important;filter:invert(1)!important;
+  min-width:260px;height:34px;background:url('/assets/images/shop-brand-sharp-20261011.png') center/contain no-repeat!important;filter:invert(1)!important;
   color:transparent!important;font-size:0!important;line-height:0!important;text-shadow:none!important;
 }
 .page-backgrounds-editor{display:flex;flex-direction:column;gap:12px;padding-top:18px}

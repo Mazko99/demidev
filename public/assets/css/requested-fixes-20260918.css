@@ -1363,7 +1363,7 @@ body.product-detail-page #productImage{
     min-width:326px!important;
     height:28px!important;
     min-height:28px!important;
-    background:url("/assets/images/shop-brand-hd-20261011.png") center/326px 28px no-repeat!important;
+    background:url("/assets/images/shop-brand-sharp-20261011.png") center/326px 28px no-repeat!important;
     color:transparent!important;
     font-size:0!important;
     line-height:0!important;
@@ -1464,7 +1464,7 @@ body.product-detail-page #productImage{
     padding:0!important;
     transform:translateX(-50%)!important;
     transform-origin:center center!important;
-    background:url("/assets/images/shop-brand-hd-20261011.png") center/100% 100% no-repeat!important;
+    background:url("/assets/images/shop-brand-sharp-20261011.png") center/100% 100% no-repeat!important;
     color:transparent!important;
     font-size:0!important;
     line-height:0!important;
@@ -1572,7 +1572,7 @@ body.product-detail-page #productImage{
     height:clamp(18.55px,1.458vw,28px)!important;min-height:0!important;
     margin:0!important;padding:0!important;
     transform:translateX(-50%)!important;transform-origin:center center!important;
-    background:url("/assets/images/shop-brand-hd-20261011.png") center/100% 100% no-repeat!important;
+    background:url("/assets/images/shop-brand-sharp-20261011.png") center/100% 100% no-repeat!important;
     color:transparent!important;font-size:0!important;line-height:0!important;letter-spacing:0!important;
     text-indent:-9999px!important;overflow:hidden!important;white-space:nowrap!important;
   }

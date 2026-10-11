@@ -550,7 +550,7 @@
     width:540px!important;
     height:52px!important;
     margin:0 0 35px!important;
-    background:url("/assets/images/brand-title-ref-hd-20261011.png") center/540px 52px no-repeat!important;
+    background:url("/assets/images/brand-title-ref-sharp-20261011.png") center/540px 52px no-repeat!important;
     color:transparent!important;
     font-size:0!important;
     line-height:0!important;
@@ -725,7 +725,7 @@
     width:326px;
     height:28px;
     transform:translateX(-50%);
-    background:url("/assets/images/shop-brand-hd-20261011.png") center/326px 28px no-repeat;
+    background:url("/assets/images/shop-brand-sharp-20261011.png") center/326px 28px no-repeat;
     color:transparent;
     font-size:0;
     line-height:0;
@@ -2004,7 +2004,7 @@
     margin:0!important;
     padding:0!important;
     transform:translateX(-50%)!important;
-    background:url("/assets/images/shop-brand-hd-20261011.png") center/326px 28px no-repeat!important;
+    background:url("/assets/images/shop-brand-sharp-20261011.png") center/326px 28px no-repeat!important;
     color:transparent!important;
     font-size:0!important;
     line-height:0!important;
@@ -2116,7 +2116,7 @@
     top:31px!important;
     width:326px!important;
     height:28px!important;
-    background:url("/assets/images/shop-brand-hd-20261011.png") center/326px 28px no-repeat!important;
+    background:url("/assets/images/shop-brand-sharp-20261011.png") center/326px 28px no-repeat!important;
   }
 
   
@@ -2152,7 +2152,7 @@
 
   /* 2) Keep the exact SHOP brand drawing, but use a subtly thinned (~10%) version. */
   body.login-page>#desktopHeader .brand{
-    background-image:url("/assets/images/shop-brand-light-hd-20261011.png")!important;
+    background-image:url("/assets/images/shop-brand-light-sharp-20261011.png")!important;
     background-size:326px 28px!important;
     background-repeat:no-repeat!important;
     background-position:center!important;
@@ -2380,7 +2380,7 @@
     padding:0!important;
     transform:translateX(-50%)!important;
     background-color:transparent!important;
-    background-image:url("/assets/images/shop-brand-light-hd-20261011.png")!important;
+    background-image:url("/assets/images/shop-brand-light-sharp-20261011.png")!important;
     background-repeat:no-repeat!important;
     background-position:center!important;
     background-size:326px 28px!important;
@@ -2660,7 +2660,7 @@
     padding:0!important;
     transform:translateX(-50%)!important;
     background-color:transparent!important;
-    background-image:url("/assets/images/shop-brand-light-hd-20261011.png")!important;
+    background-image:url("/assets/images/shop-brand-light-sharp-20261011.png")!important;
     background-repeat:no-repeat!important;
     background-position:center!important;
     background-size:326px 28px!important;
@@ -4976,7 +4976,7 @@ body.product-detail-page::-webkit-scrollbar-thumb{background:#000;border-radius:
     margin:0!important;
     padding:0!important;
     transform:none!important;
-    background-image:url("/assets/images/shop-brand-light-hd-20261011.png")!important;
+    background-image:url("/assets/images/shop-brand-light-sharp-20261011.png")!important;
     background-repeat:no-repeat!important;
     background-position:0 0!important;
     background-size:326px 28px!important;
@@ -5587,7 +5587,7 @@ body.product-detail-page::-webkit-scrollbar-thumb{background:#000;border-radius:
     margin:0!important;
     padding:0!important;
     transform:translateX(-50%)!important;
-    background:url("/assets/images/shop-brand-hd-20261011.png") center/326px 28px no-repeat!important;
+    background:url("/assets/images/shop-brand-sharp-20261011.png") center/326px 28px no-repeat!important;
     color:transparent!important;
     font-size:0!important;
     line-height:0!important;
