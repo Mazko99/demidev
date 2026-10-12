@@ -267,3 +267,19 @@ html body.product-detail-page #productImage:not(video) {cursor: zoom-in !importa
 html body.product-detail-page #productPage .product-visual > img#productImage {
   pointer-events: auto !important;
 }
+
+/* Customer login only: show a compact red error below the password input. */
+html body.login-page #loginCanvas #loginForm .login-error {
+  display:block!important;
+  margin:3px 0 8px!important;
+  padding:0!important;
+  color:#c20b0b!important;
+  background:transparent!important;
+  border:0!important;
+  font:400 12px/1.35 Arial,sans-serif!important;
+  text-align:left!important;
+  white-space:normal!important;
+}
+html body.login-page #loginCanvas #loginForm .login-error[hidden] {
+  display:none!important;
+}

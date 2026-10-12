@@ -93,22 +93,40 @@
     showUser(d.user);
   });
 
+  const loginError=$('#loginError');
+  const setLoginError=(message='')=>{
+    if(!loginError)return;
+    loginError.textContent=message;
+    loginError.hidden=!message;
+  };
+  $('#loginForm').addEventListener('input',()=>setLoginError());
   $('#loginForm').addEventListener('submit',async e=>{
     e.preventDefault();
+    setLoginError();
     const f=new FormData(e.target);
-    const r=await fetch('/api/auth/login',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({email:f.get('email'),password:f.get('password')})
-    });
-    const d=await r.json();
-    if(!r.ok)return show(d.error||'Login failed');
-    storeToken(d.token,!!f.get('remember'));
-    show('Logged in.',true);
-    if(sessionStorage.getItem('dd_checkout_return')==='1'){
-      sessionStorage.removeItem('dd_checkout_return');location.assign('/checkout.html');return;
+    const ru=document.documentElement.lang==='ru';
+    try{
+      const r=await fetch('/api/auth/login',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({email:f.get('email'),password:f.get('password')})
+      });
+      const d=await r.json().catch(()=>({}));
+      if(!r.ok){
+        setLoginError(r.status===401
+          ?(ru?'Неверный логин или пароль.':'Incorrect email or password.')
+          :(ru?'Не удалось войти. Попробуйте ещё раз.':'Unable to sign in. Please try again.'));
+        return;
+      }
+      storeToken(d.token,!!f.get('remember'));
+      show('Logged in.',true);
+      if(sessionStorage.getItem('dd_checkout_return')==='1'){
+        sessionStorage.removeItem('dd_checkout_return');location.assign('/checkout.html');return;
+      }
+      showUser(d.user);
+    }catch{
+      setLoginError(ru?'Не удалось войти. Попробуйте ещё раз.':'Unable to sign in. Please try again.');
     }
-    showUser(d.user);
   });
 
   function showUser(user){

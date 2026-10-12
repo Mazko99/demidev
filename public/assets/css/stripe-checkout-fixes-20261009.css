@@ -54,3 +54,9 @@ body.checkout-page::after{content:"";display:block;position:relative;clear:both;
 @media(min-width:901px){
   body.checkout-page{min-height:calc(var(--checkout-stage-height,1080px) + 88px)!important;}
 }
+
+/* The old .sum-row display:flex!important overrides the browser's [hidden]
+   rule, painting Discount on top of Shipping. Hide it until a coupon applies. */
+body.checkout-page .order-side > #discountRow[hidden] {
+  display:none!important;
+}

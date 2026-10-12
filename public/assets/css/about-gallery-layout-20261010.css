@@ -326,3 +326,25 @@ body.about-page.about-extra-fullscreen #aboutExtraContent .about-extra-media vid
   object-fit:cover!important;
   object-position:center center!important;
 }
+
+/* Russian ABOUT only: remove the legacy bottom paragraph and display the
+   configured artwork in the same place as the English version. */
+html[lang="ru"] body.about-page .about-copy-ru {
+  display:none!important;
+}
+@media (min-width:901px) {
+  html[lang="ru"] body.about-page .about-copy-art {
+    display:block!important;
+  }
+  html[lang="ru"] body.about-page.about-custom-desktop-media:not(.about-fullscreen-desktop) .about-wrap {
+    padding-top:96px!important;
+  }
+}
+@media (max-width:900px) {
+  html[lang="ru"] body.about-page .about-copy-art {
+    display:none!important;
+  }
+  html[lang="ru"] body.about-page .about-mobile-approved {
+    display:block!important;
+  }
+}
