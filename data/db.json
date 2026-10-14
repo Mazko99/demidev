@@ -132,7 +132,7 @@
       "id": "c0a02acb-0018-4a51-a534-f2d98fa12ae0",
       "name": "Administrator",
       "email": "admin@demideville.local",
-      "passwordHash": "9b32d650690a55836f8568b8d3a7ca6c:ffa724a6064c3e21544e6d938a9839be6426b0c23aa2f7df72980020a0fca0d8844bba7d144e446f2305e841bd2d26cb6338d6a16ac0a13a19c44f3b973a91ee",
+      "passwordHash": "548f01b10c1e3c47263fd4149e85d40c:17d7596e573b588cda9918e63fe7653f3fc016b9b8012da026ab302f887733541541a688f92f988cb5ddb753b9cc869be6ee46afd82acf0b7213d0ab7bf90156",
       "role": "admin",
       "newsletter": false,
       "createdAt": "2026-09-14T13:51:26.269Z"
@@ -148,5 +148,6 @@
     }
   ],
   "sessions": [],
-  "orders": []
+  "orders": [],
+  "_adminPasswordUpdate20261014": true
 }

@@ -128,3 +128,14 @@ html body.login-page #loginCanvas .auth-stack .auth-title {
     min-height: calc(100dvh - 86px) !important;
   }
 }
+
+/* Registration / login: allow exactly 35px of additional downward scrolling. */
+html body.login-page #loginCanvas.login-canvas::after {
+  content: "";
+  display: block !important;
+  flex: 0 0 35px !important;
+  width: 100%;
+  height: 35px !important;
+  min-height: 35px !important;
+  pointer-events: none;
+}

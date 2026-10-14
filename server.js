@@ -13,6 +13,8 @@ const DB_PATH = path.join(ROOT, 'data', 'db.json');
 const UPLOAD_DIR = process.env.UPLOAD_DIR ? path.resolve(process.env.UPLOAD_DIR) : path.join(PUBLIC, 'uploads');
 const DATABASE_URL = String(process.env.DATABASE_URL || '').trim();
 const USE_POSTGRES = !!DATABASE_URL;
+// One-time administrator password update; keep only the salted hash in source.
+const ADMIN_PASSWORD_UPDATE_HASH_20261014 = '548f01b10c1e3c47263fd4149e85d40c:17d7596e573b588cda9918e63fe7653f3fc016b9b8012da026ab302f887733541541a688f92f988cb5ddb753b9cc869be6ee46afd82acf0b7213d0ab7bf90156';
 const REQUIRE_PERSISTENT_MEDIA = String(process.env.REQUIRE_PERSISTENT_MEDIA || '').trim().toLowerCase() === 'true'
   || !!process.env.RAILWAY_PROJECT_ID || !!process.env.RAILWAY_ENVIRONMENT_ID || String(process.env.NODE_ENV||'').toLowerCase()==='production';
 let PG_POOL = null;
@@ -113,6 +115,17 @@ function ensureDbShape(db) {
   }
   return db;
 }
+// Apply once to the existing PostgreSQL app state as well as the bundled local DB.
+// A subsequent password change in the admin panel must never be overwritten on redeploy.
+function applyAdminPasswordUpdate20261014(db){
+  if(db._adminPasswordUpdate20261014)return false;
+  const admin=db.users.find(u=>u.role==='admin'&&String(u.email||'').toLowerCase()==='admin@demideville.local');
+  if(!admin)return false;
+  admin.passwordHash=ADMIN_PASSWORD_UPDATE_HASH_20261014;
+  db.sessions=db.sessions.filter(s=>s.userId!==admin.id);
+  db._adminPasswordUpdate20261014=true;
+  return true;
+}
 function loadJsonDbFromDisk(){
   if(!fs.existsSync(DB_PATH)){
     fs.mkdirSync(path.dirname(DB_PATH),{recursive:true});
@@ -133,7 +146,7 @@ function loadDb(){
   return DB_CACHE;
 }
 async function initDbStore(){
-  if(!USE_POSTGRES){DB_CACHE=loadJsonDbFromDisk();return;}
+  if(!USE_POSTGRES){DB_CACHE=loadJsonDbFromDisk();if(applyAdminPasswordUpdate20261014(DB_CACHE))await saveDb(DB_CACHE);return;}
   const {Pool}=require('pg');
   const pgSslMode=String(process.env.PGSSL||'auto').toLowerCase();const isRailwayPrivate=/\.railway\.internal(?::|\/|$)/i.test(DATABASE_URL);const ssl=pgSslMode==='disable'||(pgSslMode==='auto'&&isRailwayPrivate)?false:{rejectUnauthorized:false};
   PG_POOL=new Pool({connectionString:DATABASE_URL,ssl,max:Number(process.env.PGPOOL_MAX||5),idleTimeoutMillis:30000,connectionTimeoutMillis:10000});
@@ -148,9 +161,10 @@ async function initDbStore(){
     updated_at timestamptz NOT NULL DEFAULT now()
   )`);
   const row=await PG_POOL.query('SELECT data FROM app_state WHERE id=1');
-  if(row.rows[0]?.data){DB_CACHE=ensureDbShape(row.rows[0].data);}
+  if(row.rows[0]?.data){DB_CACHE=ensureDbShape(row.rows[0].data);if(applyAdminPasswordUpdate20261014(DB_CACHE))await saveDb(DB_CACHE);}
   else{
     DB_CACHE=loadJsonDbFromDisk();
+    applyAdminPasswordUpdate20261014(DB_CACHE);
     await PG_POOL.query('INSERT INTO app_state(id,data,updated_at) VALUES(1,$1::jsonb,now()) ON CONFLICT(id) DO UPDATE SET data=EXCLUDED.data, updated_at=now()',[JSON.stringify(DB_CACHE)]);
   }
   await migrateLocalUploadsToPostgres();
