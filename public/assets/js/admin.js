@@ -9,6 +9,7 @@ let galleryDraft=[];
 let productImagesDraft=[];
 let productSizesDraft=[];
 let paymentMethodsDraft=[];
+let audioDraft={};
 const DEFAULT_ABOUT_EN='About <strong>DEMI DEVILLE</strong> is a <em>PIONEERING DESIGN STUDIO BASED</em> in Paris, specializing in fashion, spatial design, and visual direction. <em>Established by Augustine</em> Oh &amp; Jude Lee, the <strong>studio redefines traditional</strong> design frameworks through methods of deconstruction, expansion, and reduction. <strong>By merging</strong> high fashion with a <strong>progressive design</strong> philosophy, DEMI DEVILLE delivers innovative, high-quality work that challenges visual conventions. <strong>The studio collaborates with a wide range of celebrities,</strong> artists, and brands, offering fresh design experiences that resonate with forward-thinking audiences around the world.';
 const DEFAULT_ABOUT_RU='DEMI DEVILLE — новаторская студия дизайна из Парижа. Мы работаем с модой, пространством и визуальным стилем. Основатели студии, Огюстин О и Джуд Ли, по-новому смотрят на привычные правила дизайна: разбирают формы, расширяют возможности и убирают лишнее. Мы объединяем высокую моду с современным подходом, создаём качественные проекты и сотрудничаем с артистами, брендами и творческими людьми по всему миру.';
 const $=(s,r=document)=>r.querySelector(s);
@@ -149,7 +150,7 @@ async function boot(){
     const me=await api('/api/auth/me');
     if(me.user.role!=='admin')throw new Error('Доступ разрешён только администратору');
     $('#adminUser').textContent=me.user.email;$('#loginView').hidden=true;$('#loginView').style.display='none';$('#adminView').hidden=false;window.scrollTo(0,0);
-    const state=await api('/api/admin/state');adminState=state||{};settings=state.settings||{};productsDraft=Array.isArray(state.products)?state.products.map(clone):[];galleryDraft=Array.isArray(state.gallery)?state.gallery.map(clone):[];shopCategoriesDraft=normalizeShopCategories(settings.shopCategories);paymentMethodsDraft=normalizePaymentMethods(settings.paymentMethods);fillForm();fillShopEditor();fillGalleryEditor();fillAboutEditor();fillExternalEditors();fillSupportEditor();syncOrdersDefaultShipping();renderOrdersAdmin();renderClientsAdmin();renderPaymentEditor();renderPageBackgroundsEditor();switchAdminTab(currentAdminTab);
+    const state=await api('/api/admin/state');adminState=state||{};settings=state.settings||{};productsDraft=Array.isArray(state.products)?state.products.map(clone):[];galleryDraft=Array.isArray(state.gallery)?state.gallery.map(clone):[];shopCategoriesDraft=normalizeShopCategories(settings.shopCategories);paymentMethodsDraft=normalizePaymentMethods(settings.paymentMethods);fillForm();fillShopEditor();fillGalleryEditor();fillAboutEditor();fillExternalEditors();fillSupportEditor();fillAudioEditor();syncOrdersDefaultShipping();renderOrdersAdmin();renderClientsAdmin();renderPaymentEditor();renderPageBackgroundsEditor();switchAdminTab(currentAdminTab);
   }catch(e){token='';showLogin(e.message)}
 }
 $('#adminLogin').addEventListener('submit',async e=>{
@@ -277,7 +278,7 @@ async function save(){
   try{setBusy(true);settings=await api('/api/admin/settings',{method:'PUT',body:JSON.stringify(payload())});fillForm();showNotice('Изменения сохранены.')}catch(e){showNotice(e.message,'error')}finally{setBusy(false)}
 }
 $('#homeSettingsForm').addEventListener('submit',async e=>{e.preventDefault();await save()});
-$('#saveTop').addEventListener('click',()=>currentAdminTab==='backgrounds'?savePageBackgrounds():currentAdminTab==='shop'?saveShopSettings():currentAdminTab==='gallery'?saveGallerySettings():currentAdminTab==='about'?saveAboutSettings():currentAdminTab==='instagram'?saveInstagramSettings():currentAdminTab==='contact'?saveContactSettings():currentAdminTab==='support'?saveSupportSettings():currentAdminTab==='payment'?savePaymentSettings():(currentAdminTab==='clients'||currentAdminTab==='orders')?Promise.resolve():save());
+$('#saveTop').addEventListener('click',()=>currentAdminTab==='backgrounds'?savePageBackgrounds():currentAdminTab==='audio'?saveAudioSettings():currentAdminTab==='shop'?saveShopSettings():currentAdminTab==='gallery'?saveGallerySettings():currentAdminTab==='about'?saveAboutSettings():currentAdminTab==='instagram'?saveInstagramSettings():currentAdminTab==='contact'?saveContactSettings():currentAdminTab==='support'?saveSupportSettings():currentAdminTab==='payment'?savePaymentSettings():(currentAdminTab==='clients'||currentAdminTab==='orders')?Promise.resolve():save());
 
 function slugify(value){
   return String(value||'').trim().toLowerCase()
@@ -317,11 +318,12 @@ function fillShopEditor(){
   renderProductsAdmin();
 }
 function switchAdminTab(tab){
-  const allowed=['home','backgrounds','shop','gallery','about','instagram','contact','support','orders','clients','payment'];
+  const allowed=['home','backgrounds','audio','shop','gallery','about','instagram','contact','support','orders','clients','payment'];
   currentAdminTab=allowed.includes(tab)?tab:'home';
   $$('#adminView [data-admin-tab]').forEach(btn=>btn.classList.toggle('active',btn.dataset.adminTab===currentAdminTab));
   $('#homeSettingsForm').hidden=currentAdminTab!=='home';
   $('#backgroundsEditor').hidden=currentAdminTab!=='backgrounds';
+  $('#audioEditor').hidden=currentAdminTab!=='audio';
   $('#shopEditor').hidden=currentAdminTab!=='shop';
   $('#galleryEditor').hidden=currentAdminTab!=='gallery';
   $('#aboutEditor').hidden=currentAdminTab!=='about';
@@ -331,16 +333,85 @@ function switchAdminTab(tab){
   $('#ordersEditor').hidden=currentAdminTab!=='orders';
   $('#clientsEditor').hidden=currentAdminTab!=='clients';
   $('#paymentEditor').hidden=currentAdminTab!=='payment';
-  const titles={home:'Главная страница',backgrounds:'Фоны страниц',shop:'SHOP',gallery:'Галерея',about:'ABOUT',instagram:'Instagram',contact:'Контакты',support:'Поддержка',orders:'Заказы',clients:'Клиенты',payment:'Оплата'};
+  const titles={home:'Главная страница',backgrounds:'Фоны страниц',audio:'AUDIO / Звук',shop:'SHOP',gallery:'Галерея',about:'ABOUT',instagram:'Instagram',contact:'Контакты',support:'Поддержка',orders:'Заказы',clients:'Клиенты',payment:'Оплата'};
   $('#workspaceTitle').textContent=titles[currentAdminTab]||'Главная страница';
   const saveTop=$('#saveTop');saveTop.hidden=currentAdminTab==='clients'||currentAdminTab==='orders';
-  saveTop.textContent=currentAdminTab==='backgrounds'?'Сохранить фоны':currentAdminTab==='shop'?'Сохранить магазин':currentAdminTab==='gallery'?'Сохранить галерею':currentAdminTab==='about'?'Сохранить ABOUT':currentAdminTab==='instagram'?'Сохранить Instagram':currentAdminTab==='contact'?'Сохранить контакты':currentAdminTab==='support'?'Сохранить поддержку':currentAdminTab==='payment'?'Сохранить оплату':'Сохранить';
+  saveTop.textContent=currentAdminTab==='backgrounds'?'Сохранить фоны':currentAdminTab==='audio'?'Сохранить аудио':currentAdminTab==='shop'?'Сохранить магазин':currentAdminTab==='gallery'?'Сохранить галерею':currentAdminTab==='about'?'Сохранить ABOUT':currentAdminTab==='instagram'?'Сохранить Instagram':currentAdminTab==='contact'?'Сохранить контакты':currentAdminTab==='support'?'Сохранить поддержку':currentAdminTab==='payment'?'Сохранить оплату':'Сохранить';
   if(currentAdminTab==='clients')renderClientsAdmin();
   if(currentAdminTab==='orders'){syncOrdersDefaultShipping();renderOrdersAdmin();}
   if(currentAdminTab==='support')updateSupportPreview();
   if(currentAdminTab==='backgrounds')renderPageBackgroundsEditor();
+  if(currentAdminTab==='audio')renderAudioEditor();
 }
 $$('[data-admin-tab]').forEach(btn=>btn.addEventListener('click',()=>switchAdminTab(btn.dataset.adminTab)));
+
+
+/* Page audio: independent tracks and settings for each page. */
+const PAGE_AUDIO_DEFS=[...PAGE_BACKGROUND_DEFS,['section','Раздел магазина']];
+function normalizedAudioDraft(){
+  const source=settings.pageAudio&&typeof settings.pageAudio==='object'?settings.pageAudio:{};
+  return Object.fromEntries(PAGE_AUDIO_DEFS.map(([key])=>{
+    const entry=source[key]||{};
+    return [key,{url:String(entry.url||''),enabled:entry.enabled===true,loop:entry.loop!==false,volume:Math.max(0,Math.min(100,Number.isFinite(Number(entry.volume))?Math.round(Number(entry.volume)):50))}];
+  }));
+}
+function fillAudioEditor(){audioDraft=normalizedAudioDraft();renderAudioEditor()}
+function renderAudioEditor(){
+  const host=$('#audioPagesEditor');if(!host)return;
+  host.innerHTML=PAGE_AUDIO_DEFS.map(([key,label])=>{
+    const entry=audioDraft[key]||{url:'',enabled:false,loop:true,volume:50};
+    return `<article class="audio-page-row" data-audio-page="${esc(key)}">
+      <div class="audio-page-head"><h3>${esc(label)}</h3><a class="secondary-btn small" href="${key==='home'?'/':`/${key}.html`}" target="_blank" rel="noreferrer">Открыть ↗</a></div>
+      <div class="audio-page-controls"><label class="field"><span>Аудиофайл для страницы</span><input class="audio-url" type="text" value="${esc(entry.url)}" placeholder="Загрузите MP3 или вставьте HTTPS-ссылку"></label>
+      <label class="upload-btn"><input class="audio-upload" type="file" accept=".mp3,.wav,.ogg,.m4a,.aac,audio/*"><span>+ Загрузить аудио</span></label></div>
+      <div class="audio-page-options"><label><input class="audio-enabled" type="checkbox" ${entry.enabled?'checked':''}> Звук на этой странице включён</label>
+      <label><input class="audio-loop" type="checkbox" ${entry.loop?'checked':''}> Повторять</label>
+      <label class="audio-volume">Громкость <input class="audio-volume-range" type="range" min="0" max="100" value="${entry.volume}"><output>${entry.volume}%</output></label></div>
+      <div class="audio-page-preview"><audio controls preload="none" ${entry.url?`src="${esc(entry.url)}"`:''}></audio><button class="secondary-btn small audio-clear" type="button">Удалить аудио</button></div>
+    </article>`;
+  }).join('');
+}
+function audioRowValues(row){
+  return {url:row.querySelector('.audio-url').value.trim(),enabled:row.querySelector('.audio-enabled').checked,
+    loop:row.querySelector('.audio-loop').checked,volume:Number(row.querySelector('.audio-volume-range').value)||0};
+}
+function collectAudioDraft(){
+  $$('#audioPagesEditor [data-audio-page]').forEach(row=>{audioDraft[row.dataset.audioPage]=audioRowValues(row)});
+}
+$('#audioPagesEditor').addEventListener('input',e=>{
+  const row=e.target.closest('[data-audio-page]');if(!row)return;
+  if(e.target.matches('.audio-volume-range'))row.querySelector('output').textContent=`${e.target.value}%`;
+  if(e.target.matches('.audio-url')){const preview=row.querySelector('audio');preview.pause();preview.removeAttribute('src');if(e.target.value.trim())preview.src=e.target.value.trim();preview.load()}
+  audioDraft[row.dataset.audioPage]=audioRowValues(row);
+});
+$('#audioPagesEditor').addEventListener('change',async e=>{
+  const input=e.target;if(!input.matches('.audio-upload'))return;
+  const row=input.closest('[data-audio-page]'),file=input.files?.[0];if(!row||!file)return;
+  if(file.size>25*1024*1024){showNotice('Аудиофайл не должен превышать 25 МБ.','error');input.value='';return}
+  if(!/\.(mp3|wav|ogg|m4a|aac)$/i.test(file.name)){showNotice('Выберите MP3, WAV, OGG, M4A или AAC.','error');input.value='';return}
+  try{
+    input.disabled=true;showNotice('Загрузка аудио...');
+    const dataUrl=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(new Error('Не удалось прочитать файл'));reader.readAsDataURL(file)});
+    const result=await api('/api/admin/upload-audio',{method:'POST',body:JSON.stringify({filename:file.name,dataUrl})});
+    row.querySelector('.audio-url').value=result.url;
+    row.querySelector('.audio-enabled').checked=true;
+    const preview=row.querySelector('audio');preview.pause();preview.src=result.url;preview.load();
+    audioDraft[row.dataset.audioPage]=audioRowValues(row);
+    showNotice('Аудио загружено. Нажмите «Сохранить аудио», чтобы применить его на сайте.');
+  }catch(err){showNotice(err.message,'error')}finally{input.disabled=false;input.value=''}
+});
+$('#audioPagesEditor').addEventListener('click',e=>{
+  if(!e.target.matches('.audio-clear'))return;
+  const row=e.target.closest('[data-audio-page]');if(!row)return;
+  row.querySelector('.audio-url').value='';row.querySelector('.audio-enabled').checked=false;
+  const preview=row.querySelector('audio');preview.pause();preview.removeAttribute('src');preview.load();
+  audioDraft[row.dataset.audioPage]=audioRowValues(row);
+});
+async function saveAudioSettings(){
+  collectAudioDraft();
+  try{setBusy(true);settings=await api('/api/admin/settings',{method:'PUT',body:JSON.stringify({pageAudio:audioDraft})});fillAudioEditor();showNotice('Настройки аудио сохранены.')}catch(err){showNotice(err.message,'error')}finally{setBusy(false)}
+}
+$('#saveAudioSettings').addEventListener('click',saveAudioSettings);
 
 function normalizedPageBackgrounds(){
   const raw=settings.pageBackgrounds&&typeof settings.pageBackgrounds==='object'?settings.pageBackgrounds:{};

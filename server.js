@@ -55,7 +55,7 @@ function defaultDb() {
       baseFontSize: 16, shopPageSize: 8, shipping: 30, currency: '$',
       aboutMainMediaDesktop:'/assets/images/about-copy-psd.png', aboutMainMediaMobile:'/assets/images/about-mobile-approved.jpg', aboutExtraHtmlEn:'', aboutExtraHtmlRu:'',
       aboutExtraTextEn:'', aboutExtraTextRu:'', aboutExtraFont:'', aboutExtraFontSizeDesktop:24, aboutExtraFontSizeMobile:18, aboutExtraMedia:'',
-      checkoutCountries:[...DEFAULT_CHECKOUT_COUNTRIES], checkoutCountriesExtra:[], pageBackgrounds:{}, mailFrom:'', supportTo:'', newsletterSubjectEn:'DEMI DEVILLE', newsletterSubjectRu:'DEMI DEVILLE',
+      checkoutCountries:[...DEFAULT_CHECKOUT_COUNTRIES], checkoutCountriesExtra:[], pageBackgrounds:{}, pageAudio:{}, mailFrom:'', supportTo:'', newsletterSubjectEn:'DEMI DEVILLE', newsletterSubjectRu:'DEMI DEVILLE',
       sellerName:'BOHDAN DROBOT ALEKSANDROVICH', sellerAddress:'', sellerCountry:'', legalEmail:'',
 
       paymentMethods: [
@@ -95,6 +95,7 @@ function ensureDbShape(db) {
   db.settings.checkoutCountries=[...new Set(countries.map(x=>String(x||'').trim()).filter(x=>x&&!/^(russia|belarus)$/i.test(x)))];
   if(!db.settings.checkoutCountries.length)db.settings.checkoutCountries=[...DEFAULT_CHECKOUT_COUNTRIES];
   if(!db.settings.pageBackgrounds||typeof db.settings.pageBackgrounds!=='object'||Array.isArray(db.settings.pageBackgrounds))db.settings.pageBackgrounds={};
+  if(!db.settings.pageAudio||typeof db.settings.pageAudio!=='object'||Array.isArray(db.settings.pageAudio))db.settings.pageAudio={};
   // Migrate legacy product records without dropping user content. Duplicate IDs used by
   // old test data are made unique so product links and admin edits remain deterministic.
   const seenProductIds=new Set();
@@ -183,7 +184,7 @@ async function saveDb(db){
 }
 function mediaMimeFromName(name){
   const ext=path.extname(String(name||'')).toLowerCase();
-  return ({'.jpg':'image/jpeg','.jpeg':'image/jpeg','.png':'image/png','.gif':'image/gif','.webp':'image/webp','.svg':'image/svg+xml','.mp4':'video/mp4','.webm':'video/webm','.mov':'video/quicktime'})[ext]||'application/octet-stream';
+  return ({'.jpg':'image/jpeg','.jpeg':'image/jpeg','.png':'image/png','.gif':'image/gif','.webp':'image/webp','.svg':'image/svg+xml','.mp4':'video/mp4','.webm':'video/webm','.mov':'video/quicktime','.mp3':'audio/mpeg','.wav':'audio/wav','.ogg':'audio/ogg','.m4a':'audio/mp4','.aac':'audio/aac'})[ext]||'application/octet-stream';
 }
 async function persistUploadedMedia(name,mime,buffer){
   if(USE_POSTGRES&&PG_POOL){
@@ -574,7 +575,7 @@ async function handleApi(req,res,u){
     return sendJson(res,200,{ok:true,order});
   }
   if(m==='GET'&&p==='/api/admin/state'){const a=needUser(req,res,true);if(!a)return;return sendJson(res,200,{settings:a.db.settings,products:a.db.products,gallery:a.db.gallery,sections:a.db.sections,orders:a.db.orders,supportMessages:Array.isArray(a.db.supportMessages)?a.db.supportMessages:[],users:a.db.users.map(sanitizeUser),coupons:(Array.isArray(a.db.coupons)?a.db.coupons:[]).map(sanitizeCoupon)});}
-  if(m==='PUT'&&p==='/api/admin/settings'){const a=needUser(req,res,true);if(!a)return;const b=await readJson(req);if(Object.prototype.hasOwnProperty.call(b,'shipping')){const amount=Number(b.shipping);if(b.shipping===''||b.shipping===null||!Number.isFinite(amount)||amount<0||amount>100000)return sendJson(res,400,{error:'Shipping must be between 0 and 100000.'});b.shipping=Math.round((amount+Number.EPSILON)*100)/100;}if(b.shopPageSize!=null)b.shopPageSize=Math.max(1,Math.min(8,Math.floor(Number(b.shopPageSize)||8)));if(Array.isArray(b.checkoutCountries)){b.checkoutCountries=[...new Set(b.checkoutCountries.map(x=>String(x||'').trim()).filter(x=>x&&!/^(russia|belarus)$/i.test(x)))];if(!b.checkoutCountries.length)b.checkoutCountries=[...DEFAULT_CHECKOUT_COUNTRIES]}if(b.pageBackgrounds!=null&&(!b.pageBackgrounds||typeof b.pageBackgrounds!=='object'||Array.isArray(b.pageBackgrounds)))b.pageBackgrounds={};a.db.settings={...a.db.settings,...b};await saveDb(a.db);return sendJson(res,200,a.db.settings);}
+  if(m==='PUT'&&p==='/api/admin/settings'){const a=needUser(req,res,true);if(!a)return;const b=await readJson(req);if(Object.prototype.hasOwnProperty.call(b,'shipping')){const amount=Number(b.shipping);if(b.shipping===''||b.shipping===null||!Number.isFinite(amount)||amount<0||amount>100000)return sendJson(res,400,{error:'Shipping must be between 0 and 100000.'});b.shipping=Math.round((amount+Number.EPSILON)*100)/100;}if(b.shopPageSize!=null)b.shopPageSize=Math.max(1,Math.min(8,Math.floor(Number(b.shopPageSize)||8)));if(Array.isArray(b.checkoutCountries)){b.checkoutCountries=[...new Set(b.checkoutCountries.map(x=>String(x||'').trim()).filter(x=>x&&!/^(russia|belarus)$/i.test(x)))];if(!b.checkoutCountries.length)b.checkoutCountries=[...DEFAULT_CHECKOUT_COUNTRIES]}if(b.pageBackgrounds!=null&&(!b.pageBackgrounds||typeof b.pageBackgrounds!=='object'||Array.isArray(b.pageBackgrounds)))b.pageBackgrounds={};if(b.pageAudio!==undefined){const validPages=new Set(['home','shop','product','gallery','about','login','cart','checkout','account','contact','terms','privacy','section']);const source=b.pageAudio&&typeof b.pageAudio==='object'&&!Array.isArray(b.pageAudio)?b.pageAudio:{};const filtered={};for(const [key,raw] of Object.entries(source)){if(!validPages.has(key)||!raw||typeof raw!=='object')continue;const url=String(raw.url||'').trim().slice(0,2048);if(url&&!/^\/uploads\/[a-zA-Z0-9._-]+$/.test(url)&&!/^https:\/\/[^\s<>\"']+$/i.test(url))return sendJson(res,400,{error:'Audio URL must be an uploaded file or HTTPS link.'});const volume=Number(raw.volume);filtered[key]={url,enabled:raw.enabled===true,loop:raw.loop!==false,volume:Number.isFinite(volume)?Math.max(0,Math.min(100,Math.round(volume))):50};}b.pageAudio=filtered;}a.db.settings={...a.db.settings,...b};await saveDb(a.db);return sendJson(res,200,a.db.settings);}
   if(m==='POST'&&p==='/api/admin/upload'){
     const a=needUser(req,res,true);if(!a)return;
     if(REQUIRE_PERSISTENT_MEDIA&&(!USE_POSTGRES||!PG_POOL))return sendJson(res,503,{error:'Persistent media storage is not connected. Set DATABASE_URL to PostgreSQL before uploading images or video.'});
@@ -586,6 +587,24 @@ async function handleApi(req,res,u){
     const safe=String(b.filename||'media').replace(/[^a-zA-Z0-9._-]/g,'-').replace(/\.[^.]+$/,'').slice(0,60)||'media',name=`${Date.now()}-${safe}.${ext}`;
     const buffer=Buffer.from(match[2],'base64');
     try{await persistUploadedMedia(name,mime,buffer)}catch(err){console.error('Persistent upload failed:',err);return sendJson(res,500,{error:'Could not save media permanently. Please try again.'})}
+    return sendJson(res,200,{url:`/uploads/${name}`,persistent:!!(USE_POSTGRES&&PG_POOL)});
+  }
+  // Admin-only audio upload, stored in the existing persistent media table.
+  if(m==='POST'&&p==='/api/admin/upload-audio'){
+    const a=needUser(req,res,true);if(!a)return;
+    if(REQUIRE_PERSISTENT_MEDIA&&(!USE_POSTGRES||!PG_POOL))return sendJson(res,503,{error:'Connect PostgreSQL to save audio files permanently.'});
+    const maxBytes=25*1024*1024;
+    const b=await readJson(req,Math.ceil(maxBytes*1.39)+1024*16);
+    const match=String(b.dataUrl||'').match(/^data:(audio\/(?:mpeg|mp3|wav|x-wav|wave|ogg|mp4|x-m4a|aac));base64,([a-zA-Z0-9+/=]+)$/i);
+    if(!match)return sendJson(res,400,{error:'Unsupported audio format. Upload MP3, WAV, OGG or M4A.'});
+    const mime=match[1].toLowerCase();
+    const ext=({'audio/mpeg':'mp3','audio/mp3':'mp3','audio/wav':'wav','audio/x-wav':'wav','audio/wave':'wav','audio/ogg':'ogg','audio/mp4':'m4a','audio/x-m4a':'m4a','audio/aac':'aac'})[mime];
+    if(!ext)return sendJson(res,400,{error:'Unsupported audio format.'});
+    const file=Buffer.from(match[2],'base64');
+    if(!file.length||file.length>maxBytes)return sendJson(res,413,{error:'Audio must be under 25 MB.'});
+    const safe=String(b.filename||'audio').replace(/[^a-zA-Z0-9._-]/g,'-').replace(/\.[^.]+$/,'').slice(0,40)||'audio';
+    const name=`${Date.now()}-${crypto.randomBytes(4).toString('hex')}-${safe}.${ext}`;
+    try{await persistUploadedMedia(name,mime,file)}catch(err){console.error('Audio upload failed:',err);return sendJson(res,500,{error:'Could not save audio. Please retry.'})}
     return sendJson(res,200,{url:`/uploads/${name}`,persistent:!!(USE_POSTGRES&&PG_POOL)});
   }
   // Dedicated admin-only font upload. No fonts are shipped in the project ZIP;
@@ -712,7 +731,7 @@ async function handleApi(req,res,u){
   return sendJson(res,404,{error:'Not found'});
 }
 
-const MIME={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'application/javascript; charset=utf-8','.json':'application/json; charset=utf-8','.jpg':'image/jpeg','.jpeg':'image/jpeg','.png':'image/png','.gif':'image/gif','.svg':'image/svg+xml','.webp':'image/webp','.ico':'image/x-icon','.woff':'font/woff','.woff2':'font/woff2','.ttf':'font/ttf','.mp4':'video/mp4','.webm':'video/webm','.mov':'video/quicktime'};
+const MIME={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'application/javascript; charset=utf-8','.json':'application/json; charset=utf-8','.jpg':'image/jpeg','.jpeg':'image/jpeg','.png':'image/png','.gif':'image/gif','.svg':'image/svg+xml','.webp':'image/webp','.ico':'image/x-icon','.woff':'font/woff','.woff2':'font/woff2','.ttf':'font/ttf','.mp4':'video/mp4','.webm':'video/webm','.mov':'video/quicktime','.mp3':'audio/mpeg','.wav':'audio/wav','.ogg':'audio/ogg','.m4a':'audio/mp4','.aac':'audio/aac'};
 const TEXT_EXT=new Set(['.html','.css','.js','.json','.svg']);
 function serveStatic(req,res,u){
   let rel=decodeURIComponent(u.pathname);if(rel==='/')rel='/index.html';if(rel==='/admin')rel='/admin/index.html';if(!path.extname(rel))rel += '.html';
@@ -728,11 +747,11 @@ function serveStatic(req,res,u){
     const etag=`W/"${st.size.toString(16)}-${Math.floor(st.mtimeMs).toString(16)}"`;
     const headers={'Content-Type':MIME[ext]||'application/octet-stream','ETag':etag,'Last-Modified':st.mtime.toUTCString()};
     if(ext==='.html')headers['Cache-Control']='no-cache, must-revalidate';
-    else if(['.jpg','.jpeg','.png','.gif','.webp','.svg','.ico','.woff','.woff2','.ttf','.mp4','.webm','.mov'].includes(ext))headers['Cache-Control']=isUpload?'public, max-age=31536000, immutable':'public, max-age=2592000, immutable';
+    else if(['.jpg','.jpeg','.png','.gif','.webp','.svg','.ico','.woff','.woff2','.ttf','.mp4','.webm','.mov','.mp3','.wav','.ogg','.m4a','.aac'].includes(ext))headers['Cache-Control']=isUpload?'public, max-age=31536000, immutable':'public, max-age=2592000, immutable';
     else headers['Cache-Control']='public, max-age=604800';
     if(req.headers['if-none-match']===etag&&!req.headers.range){res.writeHead(304,headers);return res.end()}
-    const isVideo=['.mp4','.webm','.mov'].includes(ext);
-    if(isVideo){
+    const isStreamable=['.mp4','.webm','.mov','.mp3','.wav','.ogg','.m4a','.aac'].includes(ext);
+    if(isStreamable){
       headers['Accept-Ranges']='bytes';
       const range=String(req.headers.range||'').match(/^bytes=(\d*)-(\d*)$/);
       if(range){

@@ -1,0 +1,51 @@
+/* DEMI DEVILLE: audio toggle next to the existing SUPPORT button.
+   SVG is vector-based and keeps its aspect ratio at every viewport size. */
+.dd-audio-button {
+  position: fixed;
+  right: 190px;
+  bottom: 28px;
+  z-index: 2147481990;
+  width: 35px;
+  height: 35px;
+  min-width: 0;
+  min-height: 0;
+  padding: 1px;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transform: none !important;
+  transition: opacity .15s ease;
+}
+.dd-audio-button svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  flex: none;
+  aspect-ratio: 1;
+  overflow: visible;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.dd-audio-button svg path:first-child {fill:currentColor;stroke:none}
+.dd-audio-button svg path:last-child {stroke-width:3.3}
+.dd-audio-button:focus-visible {outline:2px solid currentColor;outline-offset:4px}
+.dd-audio-button:hover:not(:disabled){opacity:.75}
+.dd-audio-button:disabled{opacity:.55;cursor:default}
+.dd-audio-button .dd-audio-unmuted {display:none}
+.dd-audio-button.is-playing .dd-audio-unmuted {display:block}
+.dd-audio-button.is-playing .dd-audio-muted {display:none}
+body.dd-audio-home .dd-audio-button {color:#fff;filter:drop-shadow(0 1px 2px rgba(0,0,0,.55))}
+@media(max-width:900px){.dd-audio-button{width:28px;height:28px;right:146px;bottom:23px}}
+@media(max-width:380px){.dd-audio-button{width:26px;height:26px}}

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>DEMI DEVILLE — Админ-панель</title>
-  <link rel="stylesheet" href="/assets/css/admin.css?v=20261011-sharp-edges">
+  <link rel="stylesheet" href="/assets/css/admin.css?v=20261016-audio-v1">
 </head>
 <body>
   <section id="loginView" class="auth-screen">
@@ -32,6 +32,7 @@
       <nav class="side-nav">
         <button class="nav-item active" type="button" data-admin-tab="home">Главная страница</button>
         <button class="nav-item" type="button" data-admin-tab="backgrounds">ФОНЫ СТРАНИЦ</button>
+        <button class="nav-item" type="button" data-admin-tab="audio">AUDIO / ЗВУК</button>
         <button class="nav-item" type="button" data-admin-tab="shop">SHOP</button>
         <button class="nav-item" type="button" data-admin-tab="gallery">ГАЛЕРЕЯ</button>
         <button class="nav-item" type="button" data-admin-tab="about">ABOUT</button>
@@ -480,6 +481,15 @@
         </section>
       </section>
 
+      <section id="audioEditor" class="editor-form" hidden>
+        <section class="device-card">
+          <div class="device-card-head"><div><span class="device-badge">AUDIO</span><h2>Аудио для страниц сайта</h2></div></div>
+          <p class="admin-help-text">Выберите отдельный музыкальный файл для каждой страницы. Поддерживаются MP3, WAV, OGG и M4A (до 25 МБ). Звук включается посетителем с помощью значка рядом с SUPPORT; браузеры могут запрещать автозапуск со звуком.</p>
+          <div id="audioPagesEditor" class="audio-pages-editor"></div>
+        </section>
+        <div class="form-actions"><div class="save-note">Загрузите аудио, включите его для нужных страниц и сохраните настройки.</div><button id="saveAudioSettings" class="primary-btn large" type="button">Сохранить аудио</button></div>
+      </section>
+
       <section id="paymentEditor" class="editor-form" hidden>
         <section class="device-card">
           <div class="device-card-head">
@@ -580,6 +590,6 @@
     </section>
   </div>
 
-  <script src="/assets/js/admin.js?v=20261011-product-copy-v1"></script>
+  <script src="/assets/js/admin.js?v=20261016-page-audio-v1"></script>
 </body>
 </html>
