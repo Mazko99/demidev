@@ -1,15 +1,33 @@
-/* Site-wide per-page sound toggle. Audio never forces unmuted autoplay: the
-   listener chooses sound first; after navigation we retry where permitted. */
+/* Site-wide per-page audio. The visitor starts with sound enabled on each
+   new entry; browsers may require a gesture before actual playback can start. */
 (async function mountDemiAudio(){
   if(document.getElementById('ddPageAudioButton'))return;
+
+  // A new site visit (including a reload) always starts with sound ON. Keep a
+  // visitor's manual mute only when moving between pages within this visit.
+  let wanted=true;
+  try{
+    const referrer=document.referrer?new URL(document.referrer,location.href):null;
+    const nav=performance.getEntriesByType('navigation')[0];
+    const internalLink=referrer?.origin===location.origin&&nav?.type==='navigate';
+    if(internalLink)wanted=sessionStorage.getItem('dd_audio_wanted')!=='0';
+    else sessionStorage.removeItem('dd_audio_wanted');
+  }catch{wanted=true;}
+
   const site=await (typeof SITE!=='undefined'?SITE:fetch('/api/site').then(r=>r.json()));
   const cfg=site?.settings?.pageAudio||{};
   const pathname=location.pathname.toLowerCase();
   const key=(typeof ddPageBackgroundKey==='function'?ddPageBackgroundKey():'') || (pathname==='/'?'home':pathname.replace(/^\//,'').replace(/\.html$/,''));
   const entry=cfg[key]&&typeof cfg[key]==='object'?cfg[key]:{};
   const src=String(entry.url||'').trim();
+  // No saved MP3/WAV file for this page means no sound button at all.
   const configured=entry.enabled!==false&&/^\/uploads\/[a-zA-Z0-9._-]+\.(?:mp3|wav)$/i.test(src);
   if(!configured)return;
+  // A stale/deleted upload must not leave an inert sound icon on the page.
+  try{
+    const response=await fetch(src,{method:'HEAD',cache:'no-store'});
+    if(!response.ok||!/^audio\/(?:mpeg|wav|x-wav|wave)\b/i.test(response.headers.get('content-type')||''))return;
+  }catch{return;}
   if(key==='home')document.body.classList.add('dd-audio-home');
 
   const button=document.createElement('button');
@@ -46,7 +64,6 @@
   document.getElementById('langToggle')?.addEventListener('click',()=>requestAnimationFrame(updatePosition));
 
   let playing=false;
-  let wanted=sessionStorage.getItem('dd_audio_wanted')!=='0';
   const language=()=>document.documentElement.lang==='ru'?'ru':'en';
   const audio=document.createElement('audio');
   const label=()=>{
@@ -94,9 +111,9 @@
   };
   button.addEventListener('click',()=>{
     if(wanted){
-      savePosition();wanted=false;sessionStorage.setItem('dd_audio_wanted','0');audio.pause();playing=false;label();
+      savePosition();wanted=false;try{sessionStorage.setItem('dd_audio_wanted','0')}catch{}audio.pause();playing=false;label();
     }else{
-      wanted=true;sessionStorage.setItem('dd_audio_wanted','1');void tryPlay();
+      wanted=true;try{sessionStorage.setItem('dd_audio_wanted','1')}catch{}void tryPlay();
     }
   });
   // Audio is ON by default. Autoplay can be blocked, so start on the first allowed interaction.
