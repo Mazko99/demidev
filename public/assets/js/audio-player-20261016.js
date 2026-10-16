@@ -1,5 +1,5 @@
-/* Site-wide per-page audio. The visitor starts with sound enabled on each
-   new entry; browsers may require a gesture before actual playback can start. */
+/* Per-page audio: attempt playback immediately once the page audio setting is known.
+   Browsers may block audible autoplay until the visitor interacts with the page. */
 (async function mountDemiAudio(){
   if(document.getElementById('ddPageAudioButton'))return;
 
@@ -23,11 +23,11 @@
   // No saved MP3/WAV file for this page means no sound button at all.
   const configured=entry.enabled!==false&&/^\/uploads\/[a-zA-Z0-9._-]+\.(?:mp3|wav)$/i.test(src);
   if(!configured)return;
-  // A stale/deleted upload must not leave an inert sound icon on the page.
-  try{
-    const response=await fetch(src,{method:'HEAD',cache:'no-store'});
-    if(!response.ok||!/^audio\/(?:mpeg|wav|x-wav|wave)\b/i.test(response.headers.get('content-type')||''))return;
-  }catch{return;}
+  // Verify the file in parallel: network HEAD latency must not delay the
+  // first autoplay attempt in browsers that allow audible playback.
+  const fileCheck=fetch(src,{method:'HEAD',cache:'no-store'})
+    .then(response=>response.ok&&/^audio\/(?:mpeg|wav|x-wav|wave)\b/i.test(response.headers.get('content-type')||''))
+    .catch(()=>false);
   if(key==='home')document.body.classList.add('dd-audio-home');
 
   const button=document.createElement('button');
@@ -35,7 +35,7 @@
   button.className='dd-audio-button';
   button.type='button';
   button.innerHTML=`<svg class="dd-audio-unmuted" viewBox="0 0 32 32" aria-hidden="true"><path d="M5 12H11L18 6V26L11 20H5Z"/><path d="M22 11Q27 16 22 21"/><path d="M25 6Q34 16 25 26"/></svg><svg class="dd-audio-muted" viewBox="0 0 32 32" aria-hidden="true"><path d="M5 12H11L18 6V26L11 20H5Z"/><path d="M22 11Q27 16 22 21"/><path d="M3 29L29 3"/></svg>`;
-  document.body.appendChild(button);
+  // The button appears only after the saved MP3/WAV has been verified.
 
   // Follow the actual (scaled) SUPPORT button rather than applying transforms to the icon.
   const updatePosition=()=>{
@@ -58,7 +58,6 @@
       if(root&&window.MutationObserver){const observer=new MutationObserver(updatePosition);observer.observe(root,{attributes:true,attributeFilter:['style']})}
     }else if(++tries<160)requestAnimationFrame(waitForSupport);
   };
-  waitForSupport();
   addEventListener('resize',updatePosition,{passive:true});
   window.visualViewport?.addEventListener('resize',updatePosition,{passive:true});
   document.getElementById('langToggle')?.addEventListener('click',()=>requestAnimationFrame(updatePosition));
@@ -79,9 +78,11 @@
   audio.loop=entry.loop!==false;
   const volume=Number(entry.volume);
   audio.volume=Math.min(1,Math.max(0,(Number.isFinite(volume)?volume:50)/100));
-  audio.preload='none';
+  audio.preload='auto';
   audio.setAttribute('playsinline','');
   let lastStored=0;
+  let playAttempt=0;
+  let fileAvailable=true;
   const savePosition=()=>{
     if(!playing)return;
     const t=audio.currentTime;
@@ -99,26 +100,46 @@
   addEventListener('pagehide',savePosition);
   audio.addEventListener('ended',()=>{playing=false;label()});
   const tryPlay=async()=>{
-    if(!wanted)return;
+    if(!wanted||!fileAvailable)return;
+    const attempt=++playAttempt;
     try{
       await audio.play();
+      if(attempt!==playAttempt||!wanted||!fileAvailable){audio.pause();return}
       playing=true;
     }catch{
-      // Chrome and Safari often require a new user gesture on navigation.
-      playing=false;
+      // Chrome and Safari can reject autoplay without a user gesture.
+      if(attempt===playAttempt)playing=false;
     }
-    label();
+    if(attempt===playAttempt)label();
   };
   button.addEventListener('click',()=>{
     if(wanted){
-      savePosition();wanted=false;try{sessionStorage.setItem('dd_audio_wanted','0')}catch{}audio.pause();playing=false;label();
+      savePosition();wanted=false;playAttempt++;try{sessionStorage.setItem('dd_audio_wanted','0')}catch{}audio.pause();playing=false;label();
     }else{
       wanted=true;try{sessionStorage.setItem('dd_audio_wanted','1')}catch{}void tryPlay();
     }
   });
-  // Audio is ON by default. Autoplay can be blocked, so start on the first allowed interaction.
+  // Play immediately after receiving /api/site. Do not wait for HEAD or
+  // for a click on the sound button. Browser autoplay restrictions still apply.
   if(wanted)void tryPlay();
-  const retryOnGesture=()=>{if(wanted&&!playing)void tryPlay()};
+  const retryOnGesture=(event)=>{
+    if(event.target===button||button.contains(event.target))return;
+    if(wanted&&!playing)void tryPlay();
+  };
   document.addEventListener('pointerdown',retryOnGesture,{capture:true});
   document.addEventListener('keydown',retryOnGesture,{capture:true});
+  void fileCheck.then(valid=>{
+    if(!valid){
+      fileAvailable=false;
+      playAttempt++;
+      audio.pause();
+      playing=false;
+      button.remove();
+      document.removeEventListener('pointerdown',retryOnGesture,{capture:true});
+      document.removeEventListener('keydown',retryOnGesture,{capture:true});
+      return;
+    }
+    document.body.appendChild(button);
+    waitForSupport();
+  });
 })();
