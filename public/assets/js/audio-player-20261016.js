@@ -8,7 +8,8 @@
   const key=(typeof ddPageBackgroundKey==='function'?ddPageBackgroundKey():'') || (pathname==='/'?'home':pathname.replace(/^\//,'').replace(/\.html$/,''));
   const entry=cfg[key]&&typeof cfg[key]==='object'?cfg[key]:{};
   const src=String(entry.url||'').trim();
-  const configured=entry.enabled===true&&(/^(?:\/uploads\/[a-zA-Z0-9._-]+|https:\/\/\S+)$/i.test(src));
+  const configured=entry.enabled!==false&&/^\/uploads\/[a-zA-Z0-9._-]+\.(?:mp3|wav)$/i.test(src);
+  if(!configured)return;
   if(key==='home')document.body.classList.add('dd-audio-home');
 
   const button=document.createElement('button');
@@ -16,7 +17,6 @@
   button.className='dd-audio-button';
   button.type='button';
   button.innerHTML=`<svg class="dd-audio-unmuted" viewBox="0 0 32 32" aria-hidden="true"><path d="M5 12H11L18 6V26L11 20H5Z"/><path d="M22 11Q27 16 22 21"/><path d="M25 6Q34 16 25 26"/></svg><svg class="dd-audio-muted" viewBox="0 0 32 32" aria-hidden="true"><path d="M5 12H11L18 6V26L11 20H5Z"/><path d="M22 11Q27 16 22 21"/><path d="M3 29L29 3"/></svg>`;
-  button.disabled=!configured;
   document.body.appendChild(button);
 
   // Follow the actual (scaled) SUPPORT button rather than applying transforms to the icon.
@@ -46,20 +46,18 @@
   document.getElementById('langToggle')?.addEventListener('click',()=>requestAnimationFrame(updatePosition));
 
   let playing=false;
-  let wanted=sessionStorage.getItem('dd_audio_wanted')==='1';
+  let wanted=sessionStorage.getItem('dd_audio_wanted')!=='0';
   const language=()=>document.documentElement.lang==='ru'?'ru':'en';
-  const audio=configured?document.createElement('audio'):null;
+  const audio=document.createElement('audio');
   const label=()=>{
     const ru=language()==='ru';
-    button.classList.toggle('is-playing',playing);
-    const text=!configured?(ru?'Аудио не настроено':'No audio on this page')
-      :playing?(ru?'Выключить звук':'Turn sound off'):(ru?'Включить звук':'Turn sound on');
+    button.classList.toggle('is-playing',wanted);
+    const text=wanted?(ru?'Выключить звук':'Turn sound off'):(ru?'Включить звук':'Turn sound on');
     button.setAttribute('aria-label',text);
     button.setAttribute('title',text);
-    button.setAttribute('aria-pressed',String(playing));
+    button.setAttribute('aria-pressed',String(wanted));
   };
   label();
-  if(!audio)return;
   audio.src=src;
   audio.loop=entry.loop!==false;
   const volume=Number(entry.volume);
@@ -101,11 +99,9 @@
       wanted=true;sessionStorage.setItem('dd_audio_wanted','1');void tryPlay();
     }
   });
-  // On a new page, continue only if the visitor previously opted in.
-  if(wanted){
-    void tryPlay();
-    const retryOnGesture=()=>{if(wanted&&!playing)void tryPlay()};
-    document.addEventListener('pointerdown',retryOnGesture,{capture:true});
-    document.addEventListener('keydown',retryOnGesture,{capture:true});
-  }
+  // Audio is ON by default. Autoplay can be blocked, so start on the first allowed interaction.
+  if(wanted)void tryPlay();
+  const retryOnGesture=()=>{if(wanted&&!playing)void tryPlay()};
+  document.addEventListener('pointerdown',retryOnGesture,{capture:true});
+  document.addEventListener('keydown',retryOnGesture,{capture:true});
 })();

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>DEMI DEVILLE — Админ-панель</title>
-  <link rel="stylesheet" href="/assets/css/admin.css?v=20261016-audio-v1">
+  <link rel="stylesheet" href="/assets/css/admin.css?v=20261016-audio-v2">
 </head>
 <body>
   <section id="loginView" class="auth-screen">
@@ -484,10 +484,10 @@
       <section id="audioEditor" class="editor-form" hidden>
         <section class="device-card">
           <div class="device-card-head"><div><span class="device-badge">AUDIO</span><h2>Аудио для страниц сайта</h2></div></div>
-          <p class="admin-help-text">Выберите отдельный музыкальный файл для каждой страницы. Поддерживаются MP3, WAV, OGG и M4A (до 25 МБ). Звук включается посетителем с помощью значка рядом с SUPPORT; браузеры могут запрещать автозапуск со звуком.</p>
+          <p class="admin-help-text">Выберите отдельный музыкальный файл для каждой страницы. Поддерживаются только MP3 и WAV (до 25 МБ). Звук включён по умолчанию и запускается после разрешённого браузером действия посетителя. Значок возле SUPPORT скрыт, если аудио для страницы не добавлено.</p>
           <div id="audioPagesEditor" class="audio-pages-editor"></div>
         </section>
-        <div class="form-actions"><div class="save-note">Загрузите аудио, включите его для нужных страниц и сохраните настройки.</div><button id="saveAudioSettings" class="primary-btn large" type="button">Сохранить аудио</button></div>
+        <div class="form-actions"><div class="save-note">Загрузите MP3 или WAV для нужных страниц и сохраните настройки. По умолчанию звук включён.</div><button id="saveAudioSettings" class="primary-btn large" type="button">Сохранить аудио</button></div>
       </section>
 
       <section id="paymentEditor" class="editor-form" hidden>
@@ -590,6 +590,6 @@
     </section>
   </div>
 
-  <script src="/assets/js/admin.js?v=20261016-page-audio-v1"></script>
+  <script src="/assets/js/admin.js?v=20261016-page-audio-v2"></script>
 </body>
 </html>

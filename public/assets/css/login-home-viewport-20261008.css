@@ -143,3 +143,18 @@ html body.login-page #loginCanvas.login-canvas::after {
 html body.login-page #loginCanvas.login-canvas {
   min-height: calc(100dvh + 40px) !important;
 }
+
+/* LOGIN / REGISTER only: the global desktop chrome sets html overflow:hidden.
+   Make the REAL document scrollbar visible, including when forms fit inside viewport. */
+html:has(body.login-page) {
+  overflow-y: scroll !important;
+  overflow-x: clip !important;
+  scrollbar-gutter: stable !important;
+}
+html:has(body.login-page)::-webkit-scrollbar { width: 10px; }
+html:has(body.login-page)::-webkit-scrollbar-track { background: #f0f0f0; }
+html:has(body.login-page)::-webkit-scrollbar-thumb { background: #888; border-radius: 8px; border: 2px solid #f0f0f0; }
+html:has(body.login-page)::-webkit-scrollbar-thumb:hover { background: #555; }
+html body.login-page {
+  min-height: calc(100dvh + 40px) !important;
+}

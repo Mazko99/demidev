@@ -352,18 +352,18 @@ function normalizedAudioDraft(){
   const source=settings.pageAudio&&typeof settings.pageAudio==='object'?settings.pageAudio:{};
   return Object.fromEntries(PAGE_AUDIO_DEFS.map(([key])=>{
     const entry=source[key]||{};
-    return [key,{url:String(entry.url||''),enabled:entry.enabled===true,loop:entry.loop!==false,volume:Math.max(0,Math.min(100,Number.isFinite(Number(entry.volume))?Math.round(Number(entry.volume)):50))}];
+    return [key,{url:/^\/uploads\/[a-zA-Z0-9._-]+\.(?:mp3|wav)$/i.test(String(entry.url||''))?String(entry.url):'',enabled:entry.enabled!==false,loop:entry.loop!==false,volume:Math.max(0,Math.min(100,Number.isFinite(Number(entry.volume))?Math.round(Number(entry.volume)):50))}];
   }));
 }
 function fillAudioEditor(){audioDraft=normalizedAudioDraft();renderAudioEditor()}
 function renderAudioEditor(){
   const host=$('#audioPagesEditor');if(!host)return;
   host.innerHTML=PAGE_AUDIO_DEFS.map(([key,label])=>{
-    const entry=audioDraft[key]||{url:'',enabled:false,loop:true,volume:50};
+    const entry=audioDraft[key]||{url:'',enabled:true,loop:true,volume:50};
     return `<article class="audio-page-row" data-audio-page="${esc(key)}">
       <div class="audio-page-head"><h3>${esc(label)}</h3><a class="secondary-btn small" href="${key==='home'?'/':`/${key}.html`}" target="_blank" rel="noreferrer">Открыть ↗</a></div>
-      <div class="audio-page-controls"><label class="field"><span>Аудиофайл для страницы</span><input class="audio-url" type="text" value="${esc(entry.url)}" placeholder="Загрузите MP3 или вставьте HTTPS-ссылку"></label>
-      <label class="upload-btn"><input class="audio-upload" type="file" accept=".mp3,.wav,.ogg,.m4a,.aac,audio/*"><span>+ Загрузить аудио</span></label></div>
+      <div class="audio-page-controls"><div class="field"><span>Аудиофайл для страницы (MP3 / WAV)</span><input class="audio-url" type="hidden" value="${esc(entry.url)}"><div class="audio-current-file">${entry.url?esc(entry.url.split('/').pop()):'Файл не выбран'}</div></div>
+      <label class="upload-btn"><input class="audio-upload" type="file" accept=".mp3,.wav,audio/mpeg,audio/wav,audio/x-wav"><span>+ Загрузить MP3 / WAV</span></label></div>
       <div class="audio-page-options"><label><input class="audio-enabled" type="checkbox" ${entry.enabled?'checked':''}> Звук на этой странице включён</label>
       <label><input class="audio-loop" type="checkbox" ${entry.loop?'checked':''}> Повторять</label>
       <label class="audio-volume">Громкость <input class="audio-volume-range" type="range" min="0" max="100" value="${entry.volume}"><output>${entry.volume}%</output></label></div>
@@ -381,19 +381,19 @@ function collectAudioDraft(){
 $('#audioPagesEditor').addEventListener('input',e=>{
   const row=e.target.closest('[data-audio-page]');if(!row)return;
   if(e.target.matches('.audio-volume-range'))row.querySelector('output').textContent=`${e.target.value}%`;
-  if(e.target.matches('.audio-url')){const preview=row.querySelector('audio');preview.pause();preview.removeAttribute('src');if(e.target.value.trim())preview.src=e.target.value.trim();preview.load()}
   audioDraft[row.dataset.audioPage]=audioRowValues(row);
 });
 $('#audioPagesEditor').addEventListener('change',async e=>{
   const input=e.target;if(!input.matches('.audio-upload'))return;
   const row=input.closest('[data-audio-page]'),file=input.files?.[0];if(!row||!file)return;
   if(file.size>25*1024*1024){showNotice('Аудиофайл не должен превышать 25 МБ.','error');input.value='';return}
-  if(!/\.(mp3|wav|ogg|m4a|aac)$/i.test(file.name)){showNotice('Выберите MP3, WAV, OGG, M4A или AAC.','error');input.value='';return}
+  if(!/\.(mp3|wav)$/i.test(file.name)){showNotice('Выберите MP3 или WAV.','error');input.value='';return}
   try{
     input.disabled=true;showNotice('Загрузка аудио...');
     const dataUrl=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(new Error('Не удалось прочитать файл'));reader.readAsDataURL(file)});
     const result=await api('/api/admin/upload-audio',{method:'POST',body:JSON.stringify({filename:file.name,dataUrl})});
     row.querySelector('.audio-url').value=result.url;
+    row.querySelector('.audio-current-file').textContent=file.name;
     row.querySelector('.audio-enabled').checked=true;
     const preview=row.querySelector('audio');preview.pause();preview.src=result.url;preview.load();
     audioDraft[row.dataset.audioPage]=audioRowValues(row);
@@ -403,7 +403,7 @@ $('#audioPagesEditor').addEventListener('change',async e=>{
 $('#audioPagesEditor').addEventListener('click',e=>{
   if(!e.target.matches('.audio-clear'))return;
   const row=e.target.closest('[data-audio-page]');if(!row)return;
-  row.querySelector('.audio-url').value='';row.querySelector('.audio-enabled').checked=false;
+  row.querySelector('.audio-url').value='';row.querySelector('.audio-current-file').textContent='Файл не выбран';row.querySelector('.audio-enabled').checked=true;
   const preview=row.querySelector('audio');preview.pause();preview.removeAttribute('src');preview.load();
   audioDraft[row.dataset.audioPage]=audioRowValues(row);
 });
